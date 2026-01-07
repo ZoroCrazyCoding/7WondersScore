@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#EEEEEE">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#000000"
+        android:minHeight="?attr/actionBarSize"
+        app:title="7 Wonders Score"
+        app:titleTextColor="#DAA520" />
+
+    <ImageButton
+        android:id="@+id/btn7Wonders"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scaleType="centerCrop"
+        android:src="@drawable/seven_wonders"
+        android:background="@drawable/btn_background_rounded"
+        android:contentDescription="7 Wonders"
+        android:adjustViewBounds="true"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="16dp" />
+
+    <ImageButton
+        android:id="@+id/btn7WondersDuel"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scaleType="centerCrop"
+        android:src="@drawable/seven_wonders_duel"
+        android:background="@drawable/btn_background_rounded"
+        android:contentDescription="7 Wonders Duel"
+        android:adjustViewBounds="true"
+        android:clickable="true"
+        android:focusable="true" />
+
+</LinearLayout>

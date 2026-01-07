@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#EEEEEE">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#000000"
+        android:minHeight="?attr/actionBarSize"
+        app:title="7 Wonders Score"
+        app:titleTextColor="#DAA520" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="32dp"/>
+
+    <ImageButton
+        android:id="@+id/btnNewGame"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:src="@drawable/ic_new_game"
+        android:contentDescription="New Game"
+        android:background="@drawable/btn_background_rounded"
+        android:scaleType="centerCrop"
+        android:clickable="true"
+        android:focusable="true"/>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="24dp"/>
+
+    <ImageButton
+        android:id="@+id/btnStatistics"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:src="@drawable/ic_statistics"
+        android:contentDescription="Statistics"
+        android:background="@drawable/btn_background_rounded"
+        android:scaleType="centerCrop"
+        android:clickable="true"
+        android:focusable="true"/>
+</LinearLayout>
