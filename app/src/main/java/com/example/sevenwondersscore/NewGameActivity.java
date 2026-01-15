@@ -2,14 +2,17 @@ package com.example.sevenwondersscore;
 
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-
-import java.util.*;
 import android.graphics.Color;
+import android.util.Log;
+
+import com.google.firebase.database.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class NewGameActivity extends AppCompatActivity {
 
@@ -19,9 +22,10 @@ public class NewGameActivity extends AppCompatActivity {
     Button btnFinished;
     int numPlayers;
     boolean isDuel = false;
+    String gameType;
 
     List<CheckBox> duelCheckboxes = new ArrayList<>();
-    Map<String, PlayerStats> statistics = new HashMap<>();
+    DatabaseReference statsRef;
 
     String[] symbols7Wonders = {"⛰","🪙","⚔️","🟦","🟧","🟩","🟪"};
     String[] symbolsDuel = {"🟦","🟩","🟨","🟪","⛰","🟢","🪙","⚔️"};
@@ -31,25 +35,14 @@ public class NewGameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.new_game_activity);
 
-        statistics = GameData.getInstance().getStatistics();
-        if (statistics == null) {
-            statistics = new HashMap<>();
-            GameData.getInstance().setStatistics(statistics);
-        }
-
         // Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        if (getSupportActionBar() != null) {
+        if(getSupportActionBar()!=null){
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
-
-        if (toolbar.getNavigationIcon() != null) {
-            toolbar.getNavigationIcon().setTint(Color.parseColor("#FFD700"));
-        }
-
+        if (toolbar.getNavigationIcon() != null) toolbar.getNavigationIcon().setTint(Color.parseColor("#FFD700"));
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         layoutContainer = findViewById(R.id.layoutContainer);
@@ -58,28 +51,43 @@ public class NewGameActivity extends AppCompatActivity {
         EditText etNumPlayers = findViewById(R.id.etNumPlayers);
         Button btnConfirmPlayers = findViewById(R.id.btnConfirmPlayers);
 
-        String gameType = getIntent().getStringExtra("gameType");
+        gameType = getIntent().getStringExtra("gameType");
         isDuel = "7wondersduel".equals(gameType);
+
+        Log.d("FirebaseStats", "=== NewGameActivity onCreate ===");
+        Log.d("FirebaseStats", "Game Type received: " + gameType);
+        Log.d("FirebaseStats", "Is Duel: " + isDuel);
+
+        // Riferimento Firebase per questo tipo di gioco
+        // IMPORTANTE: Usa il database europeo!
+        FirebaseDatabase europeanDatabase = FirebaseDatabase.getInstance(
+                "https://sevenwondersscore-default-rtdb.europe-west1.firebasedatabase.app"
+        );
+
+        statsRef = europeanDatabase
+                .getReference("statistics")
+                .child(gameType != null ? gameType : "7wonders");
+
+        Log.d("FirebaseStats", "Firebase Reference created: " + statsRef.toString());
+        Log.d("FirebaseStats", "Firebase Database URL: " + europeanDatabase.getReference().toString());
 
         if (isDuel) {
             numPlayers = 2;
-            layoutNumPlayers.setVisibility(View.GONE);
-            btnConfirmPlayers.setVisibility(View.GONE);
+            layoutNumPlayers.setVisibility(android.view.View.GONE);
+            btnConfirmPlayers.setVisibility(android.view.View.GONE);
             createTable();
             setupFinishedButton();
         } else {
-            layoutNumPlayers.setVisibility(View.VISIBLE);
-            btnConfirmPlayers.setVisibility(View.VISIBLE);
-
+            layoutNumPlayers.setVisibility(android.view.View.VISIBLE);
+            btnConfirmPlayers.setVisibility(android.view.View.VISIBLE);
             btnConfirmPlayers.setOnClickListener(v -> {
                 String s = etNumPlayers.getText().toString();
-                if(s.isEmpty()) { Toast.makeText(this,"Insert number of players",Toast.LENGTH_SHORT).show(); return; }
+                if (s.isEmpty()) { Toast.makeText(this,"Insert number of players",Toast.LENGTH_SHORT).show(); return; }
                 numPlayers = Integer.parseInt(s);
                 if(numPlayers < 3 || numPlayers > 7) { Toast.makeText(this,"Number of players must be between 3 and 7",Toast.LENGTH_SHORT).show(); return; }
 
-                layoutNumPlayers.setVisibility(View.GONE);
-                btnConfirmPlayers.setVisibility(View.GONE);
-
+                layoutNumPlayers.setVisibility(android.view.View.GONE);
+                btnConfirmPlayers.setVisibility(android.view.View.GONE);
                 createTable();
                 setupFinishedButton();
             });
@@ -88,28 +96,20 @@ public class NewGameActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (!isDuel) { // solo 7 Wonders normale
-            // Se la tabella è visibile e l'inserimento giocatori è nascosto, torniamo all'inserimento
-            if (layoutNumPlayers.getVisibility() == View.GONE && tableMain.getChildCount() > 0) {
-                // Mostra layout inserimento giocatori
-                layoutNumPlayers.setVisibility(View.VISIBLE);
-                findViewById(R.id.btnConfirmPlayers).setVisibility(View.VISIBLE);
-
-                // Nascondi tabella e pulsante finished
+        if (!isDuel) {
+            if (layoutNumPlayers.getVisibility() == android.view.View.GONE && tableMain.getChildCount() > 0) {
+                layoutNumPlayers.setVisibility(android.view.View.VISIBLE);
+                findViewById(R.id.btnConfirmPlayers).setVisibility(android.view.View.VISIBLE);
                 tableMain.removeAllViews();
-                if (btnFinished != null) btnFinished.setVisibility(View.GONE);
-                return; // evita di chiamare super.onBackPressed()
+                if (btnFinished != null) btnFinished.setVisibility(android.view.View.GONE);
+                return;
             }
         }
-        // Altrimenti comportamento normale
         super.onBackPressed();
     }
 
     private TableRow.LayoutParams centeredParams(){
-        TableRow.LayoutParams lp = new TableRow.LayoutParams(
-                TableRow.LayoutParams.WRAP_CONTENT,
-                TableRow.LayoutParams.WRAP_CONTENT
-        );
+        TableRow.LayoutParams lp = new TableRow.LayoutParams(TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT);
         lp.gravity = Gravity.CENTER;
         return lp;
     }
@@ -124,25 +124,20 @@ public class NewGameActivity extends AppCompatActivity {
 
         // Header
         TableRow headerRow = new TableRow(this);
-
-        // Prima colonna simboli
         TextView tvHeaderSymbol = new TextView(this);
         tvHeaderSymbol.setText(" ");
         tvHeaderSymbol.setGravity(Gravity.CENTER);
         tvHeaderSymbol.setLayoutParams(centeredParams());
         headerRow.addView(tvHeaderSymbol);
 
-        // Nomi giocatori
         for(int j=0;j<numPlayers;j++){
             EditText etName = new EditText(this);
             etName.setHint("Player "+(j+1));
             etName.setGravity(Gravity.CENTER);
             etName.setLayoutParams(centeredParams());
             headerRow.addView(etName);
-            statistics.put("Player "+(j+1), new PlayerStats());
         }
 
-        // Ultima colonna simboli (solo 7 Wonders)
         if(!isDuel && numPlayers>4){
             TextView tvHeaderSymbolEnd = new TextView(this);
             tvHeaderSymbolEnd.setText(" ");
@@ -153,11 +148,9 @@ public class NewGameActivity extends AppCompatActivity {
 
         tableMain.addView(headerRow);
 
-        // Righe simboli + campi
+        // Righe simboli + celle punteggio
         for(int i=0;i<rows;i++){
             TableRow row = new TableRow(this);
-
-            // Prima colonna simboli
             TextView tvSymbol = new TextView(this);
             tvSymbol.setText(symbols[i]);
             tvSymbol.setTextSize(24);
@@ -165,7 +158,6 @@ public class NewGameActivity extends AppCompatActivity {
             tvSymbol.setLayoutParams(centeredParams());
             row.addView(tvSymbol);
 
-            // Celle punteggio
             for(int j=0;j<numPlayers;j++){
                 EditText etScore = new EditText(this);
                 etScore.setHint("0");
@@ -183,7 +175,6 @@ public class NewGameActivity extends AppCompatActivity {
                 scoreCells[i][j] = etScore;
             }
 
-            // Ultima colonna simboli (solo 7 Wonders)
             if(!isDuel){
                 TextView tvSymbolEnd = new TextView(this);
                 tvSymbolEnd.setText(symbols[i]);
@@ -217,21 +208,15 @@ public class NewGameActivity extends AppCompatActivity {
             totalRow.addView(tvTotal);
         }
 
-        // Ultima colonna simboli (solo 7 Wonders)
-        if(!isDuel){
-            TextView tvSumEnd = new TextView(this);
-            tvSumEnd.setText("∑");
-            tvSumEnd.setTextSize(22);
-            tvSumEnd.setTypeface(null, android.graphics.Typeface.BOLD);
-            tvSumEnd.setGravity(Gravity.CENTER);
-            tvSumEnd.setLayoutParams(centeredParams());
-            totalRow.addView(tvSumEnd);
+        if(!isDuel && numPlayers>4){
+            TextView tvPlaceholder = new TextView(this);
+            tvPlaceholder.setText(" ");
+            totalRow.addView(tvPlaceholder);
         }
 
         tableMain.addView(totalRow);
 
-
-        // Duel: checkbox sotto la somma
+        // Checkbox per Duel
         if(isDuel){
             TableRow cbRow = new TableRow(this);
             TextView tvEmpty = new TextView(this);
@@ -245,14 +230,10 @@ public class NewGameActivity extends AppCompatActivity {
                 ll.setLayoutParams(centeredParams());
 
                 CheckBox cbRed = new CheckBox(this);
-                //cbRed.setBackgroundColor(Color.parseColor("#B90E0A"));
                 CheckBox cbGreen = new CheckBox(this);
-                //cbGreen.setBackgroundColor(Color.parseColor("#02971F"));
 
-                cbRed.setButtonTintList(android.content.res.ColorStateList.valueOf(
-                        android.graphics.Color.parseColor("#B90E0A")));
-                cbGreen.setButtonTintList(android.content.res.ColorStateList.valueOf(
-                        android.graphics.Color.parseColor("#02971F")));
+                cbRed.setButtonTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#B90E0A")));
+                cbGreen.setButtonTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#02971F")));
 
                 cbRed.setOnClickListener(v -> { if(cbRed.isChecked()) { for(CheckBox cb:duelCheckboxes) if(cb!=cbRed) cb.setChecked(false); } });
                 cbGreen.setOnClickListener(v -> { if(cbGreen.isChecked()) { for(CheckBox cb:duelCheckboxes) if(cb!=cbGreen) cb.setChecked(false); } });
@@ -292,7 +273,8 @@ public class NewGameActivity extends AppCompatActivity {
     }
 
     private void finishGame() {
-        // Controllo dati mancanti
+        Log.d("FirebaseStats", "=== finishGame() called ===");
+
         boolean missingData = false;
 
         for (int i = 0; i < scoreCells.length; i++) {
@@ -305,25 +287,27 @@ public class NewGameActivity extends AppCompatActivity {
             if (missingData) break;
         }
 
-        // Controllo checkbox Duel
-        int winnerColumn = -1; // -1 indica che non stiamo usando checkbox
-        int winnerCheckIndex = -1; // 0 = prima checkbox, 1 = seconda checkbox
+        int winnerColumn = -1;
+        int winnerCheckIndex = -1;
+
         if (isDuel) {
+            Log.d("FirebaseStats", "Checking Duel checkboxes...");
             for (int j = 0; j < duelCheckboxes.size(); j++) {
                 CheckBox cb = duelCheckboxes.get(j);
                 if (cb.isChecked()) {
-                    winnerColumn = j / 2; // colonna vincente
-                    winnerCheckIndex = j % 2; // tipo di vittoria
-                    missingData = false; // ignoriamo eventuali campi vuoti
+                    winnerColumn = j / 2;
+                    winnerCheckIndex = j % 2;
+                    missingData = false;
+                    Log.d("FirebaseStats", "Duel winner found: column " + winnerColumn + ", type " + winnerCheckIndex);
                     break;
                 }
             }
         }
 
-        // Mostra popup solo se necessario
         if (missingData) {
+            Log.w("FirebaseStats", "Missing data detected - showing error dialog");
             new AlertDialog.Builder(this)
-                    .setTitle("Error:")
+                    .setTitle("Error")
                     .setMessage("Missing data")
                     .setPositiveButton("OK", null)
                     .show();
@@ -334,68 +318,186 @@ public class NewGameActivity extends AppCompatActivity {
         String winner = "";
         TableRow headerRow = (TableRow) tableMain.getChildAt(0);
         int maxScore = -1;
+
+        Log.d("FirebaseStats", "Determining winner...");
         for (int j = 0; j < numPlayers; j++) {
             TextView tvTotal = findViewById(1000 + j);
             int total = Integer.parseInt(tvTotal.getText().toString());
-            EditText etName = (EditText) headerRow.getChildAt(j + 1);
-            String name = etName.getText().toString().isEmpty() ? "Giocatore " + (j + 1) : etName.getText().toString();
 
-            PlayerStats stats = statistics.get(name);
-            if (stats == null) stats = new PlayerStats();
-            stats.gamesPlayed++;
-            statistics.put(name, stats);
+            EditText etName = (EditText) headerRow.getChildAt(j + 1);
+            String name = etName.getText().toString().isEmpty()
+                    ? "Player " + (j + 1)
+                    : etName.getText().toString();
+
+            Log.d("FirebaseStats", "Player " + (j+1) + ": " + name + " - Score: " + total);
 
             if (isDuel && winnerColumn != -1) {
-                if (j == winnerColumn) winner = name; // vincitore scelto dalla checkbox
-            } else {
-                // 7 Wonders normale o Duel senza checkbox selezionata → chi ha il punteggio più alto
-                if (total > maxScore) {
-                    maxScore = total;
+                if (j == winnerColumn) {
                     winner = name;
+                    Log.d("FirebaseStats", "Duel winner: " + winner);
                 }
+            } else if (total > maxScore) {
+                maxScore = total;
+                winner = name;
+                Log.d("FirebaseStats", "New high score: " + winner + " with " + maxScore);
             }
         }
 
-        // Aggiorna statistiche vincitore
-        for (int j = 0; j < numPlayers; j++) {
-            EditText etName = (EditText) headerRow.getChildAt(j + 1);
-            String name = etName.getText().toString().isEmpty() ? "Player " + (j + 1) : etName.getText().toString();
+        Log.d("FirebaseStats", "Final winner: " + winner);
 
-            PlayerStats stats = statistics.get(name);
-            if (stats == null) stats = new PlayerStats();
-            stats.gamesPlayed++;
-            if (name.equals(winner)) {
-                stats.gamesWon++;
-            } else {
-                stats.gamesLost++; // aggiorna sconfitte
-            }
-            statistics.put(name, stats);
-        }
-
-        // Costruisci messaggio popup
         String message;
         if (isDuel && winnerColumn != -1) {
             String type = (winnerCheckIndex == 0) ? "military supremacy" : "scientific supremacy";
-            message = "Il vincitore è: " + winner + " (" + type + ")";
+            message = "The winner is: " + winner + " (" + type + ")";
         } else {
-            message = "Il vincitore è: " + winner;
+            message = "The winner is: " + winner;
         }
 
-        // Mostra popup
+        CheckBox cbSaveStats = new CheckBox(this);
+        cbSaveStats.setText("Save statistics");
+        cbSaveStats.setChecked(true);
+        Log.d("FirebaseStats", "Save statistics checkbox created and checked");
+
+        LinearLayout dialogLayout = new LinearLayout(this);
+        dialogLayout.setOrientation(LinearLayout.VERTICAL);
+        dialogLayout.setPadding(50, 20, 50, 10);
+        dialogLayout.addView(cbSaveStats);
+
+        String finalWinner = winner;
         new AlertDialog.Builder(this)
                 .setTitle("Game finished")
                 .setMessage(message)
-                .setPositiveButton("OK", (d, w) -> finish())
-                .setNegativeButton("Risultati", (d, w) -> {})
+                .setView(dialogLayout)
+                .setPositiveButton("OK", (d, w) -> {
+                    Log.d("FirebaseStats", "OK button clicked");
+                    Log.d("FirebaseStats", "Save stats checkbox is checked: " + cbSaveStats.isChecked());
+                    if (cbSaveStats.isChecked()) {
+                        Log.d("FirebaseStats", "Calling saveStatisticsToFirebase...");
+                        saveStatisticsToFirebase(headerRow, finalWinner);
+                    } else {
+                        Log.d("FirebaseStats", "Statistics NOT saved (checkbox unchecked)");
+                    }
+                    finish();
+                })
+                .setNegativeButton("Cancel", (d, w) -> {
+                    Log.d("FirebaseStats", "Cancel button clicked - not saving stats");
+                    finish();
+                })
                 .setCancelable(false)
                 .show();
 
-        GameData.getInstance().setStatistics(statistics);
+        Log.d("FirebaseStats", "Dialog shown to user");
     }
 
-    public static class PlayerStats{
-        int gamesPlayed=0;
-        int gamesWon=0;
-        int gamesLost=0;
+    private void saveStatisticsToFirebase(TableRow headerRow, String winner) {
+        Log.d("FirebaseStats", "=== START SAVING STATISTICS ===");
+        Log.d("FirebaseStats", "Game Type: " + gameType);
+        Log.d("FirebaseStats", "Number of Players: " + numPlayers);
+        Log.d("FirebaseStats", "Winner: " + winner);
+        Log.d("FirebaseStats", "Stats Reference Path: " + statsRef.toString());
+
+        // Conta quanti salvataggi devono completare
+        final int[] completedSaves = {0};
+        final int totalSaves = numPlayers;
+
+        // Salva le statistiche per ogni giocatore
+        for (int j = 0; j < numPlayers; j++) {
+            EditText etName = (EditText) headerRow.getChildAt(j + 1);
+            String name = etName.getText().toString().isEmpty()
+                    ? "Player " + (j + 1)
+                    : etName.getText().toString();
+
+            boolean isWinner = name.equals(winner);
+
+            Log.d("FirebaseStats", "Processing player " + (j+1) + ": " + name + " (isWinner: " + isWinner + ")");
+
+            DatabaseReference playerRef = statsRef.child(name);
+            Log.d("FirebaseStats", "Player Reference Path: " + playerRef.toString());
+
+            // Prima leggi i dati esistenti
+            playerRef.get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Log.d("FirebaseStats", "Read completed for: " + name);
+
+                    PlayerStats stats;
+                    DataSnapshot snapshot = task.getResult();
+
+                    if (snapshot.exists()) {
+                        stats = snapshot.getValue(PlayerStats.class);
+                        Log.d("FirebaseStats", "Existing stats for " + name +
+                                " - Played: " + stats.gamesPlayed +
+                                ", Won: " + stats.gamesWon +
+                                ", Lost: " + stats.gamesLost);
+                    } else {
+                        Log.d("FirebaseStats", "Creating new PlayerStats for: " + name);
+                        stats = new PlayerStats();
+                    }
+
+                    // Incrementa le statistiche
+                    stats.gamesPlayed++;
+                    if (isWinner) {
+                        stats.gamesWon++;
+                    } else {
+                        stats.gamesLost++;
+                    }
+
+                    Log.d("FirebaseStats", "Updated stats for " + name +
+                            " - Played: " + stats.gamesPlayed +
+                            ", Won: " + stats.gamesWon +
+                            ", Lost: " + stats.gamesLost);
+
+                    // Salva con setValue
+                    playerRef.setValue(stats).addOnCompleteListener(saveTask -> {
+                        if (saveTask.isSuccessful()) {
+                            Log.d("FirebaseStats", "✅ Statistics SAVED for " + name);
+                            completedSaves[0]++;
+
+                            if (completedSaves[0] == totalSaves) {
+                                Log.d("FirebaseStats", "🎉 ALL STATISTICS SAVED SUCCESSFULLY!");
+                                runOnUiThread(() ->
+                                        Toast.makeText(NewGameActivity.this,
+                                                "Statistics saved successfully!",
+                                                Toast.LENGTH_SHORT).show()
+                                );
+                            }
+                        } else {
+                            Log.e("FirebaseStats", "❌ ERROR saving stats for " + name, saveTask.getException());
+                            if (saveTask.getException() != null) {
+                                Log.e("FirebaseStats", "Exception: " + saveTask.getException().getMessage());
+                            }
+                            runOnUiThread(() ->
+                                    Toast.makeText(NewGameActivity.this,
+                                            "Error saving statistics for " + name,
+                                            Toast.LENGTH_SHORT).show()
+                            );
+                        }
+                    });
+
+                } else {
+                    Log.e("FirebaseStats", "❌ ERROR reading existing stats for " + name, task.getException());
+                    if (task.getException() != null) {
+                        Log.e("FirebaseStats", "Read Exception: " + task.getException().getMessage());
+                    }
+                }
+            });
+        }
+
+        Log.d("FirebaseStats", "=== ALL SAVE OPERATIONS INITIATED ===");
+    }
+
+    public static class PlayerStats {
+        public int gamesPlayed = 0;
+        public int gamesWon = 0;
+        public int gamesLost = 0;
+
+        public PlayerStats() {}
+
+        // Getter / Setter necessari per Firebase
+        public int getGamesPlayed() { return gamesPlayed; }
+        public void setGamesPlayed(int gamesPlayed) { this.gamesPlayed = gamesPlayed; }
+        public int getGamesWon() { return gamesWon; }
+        public void setGamesWon(int gamesWon) { this.gamesWon = gamesWon; }
+        public int getGamesLost() { return gamesLost; }
+        public void setGamesLost(int gamesLost) { this.gamesLost = gamesLost; }
     }
 }
