@@ -26,6 +26,7 @@ public class NewGameActivity extends AppCompatActivity {
 
     List<CheckBox> duelCheckboxes = new ArrayList<>();
     DatabaseReference statsRef;
+    DatabaseReference resultsRef;
 
     String[] symbols7Wonders = {"⛰","🪙","⚔️","🟦","🟧","🟩","🟪"};
     String[] symbolsDuel = {"🟦","🟩","🟨","🟪","⛰","🟢","🪙","⚔️"};
@@ -39,6 +40,7 @@ public class NewGameActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if(getSupportActionBar()!=null){
+            getSupportActionBar().setTitle("New Game");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
@@ -68,8 +70,12 @@ public class NewGameActivity extends AppCompatActivity {
                 .getReference("statistics")
                 .child(gameType != null ? gameType : "7wonders");
 
+        resultsRef = europeanDatabase
+                .getReference("game_results")
+                .child(gameType != null ? gameType : "7wonders");
+
         Log.d("FirebaseStats", "Firebase Reference created: " + statsRef.toString());
-        Log.d("FirebaseStats", "Firebase Database URL: " + europeanDatabase.getReference().toString());
+        Log.d("FirebaseStats", "Results Reference created: " + resultsRef.toString());
 
         if (isDuel) {
             numPlayers = 2;
@@ -346,8 +352,10 @@ public class NewGameActivity extends AppCompatActivity {
         Log.d("FirebaseStats", "Final winner: " + winner);
 
         String message;
+        String victoryType = "points";
         if (isDuel && winnerColumn != -1) {
             String type = (winnerCheckIndex == 0) ? "military supremacy" : "scientific supremacy";
+            victoryType = (winnerCheckIndex == 0) ? "military" : "scientific";
             message = "The winner is: " + winner + " (" + type + ")";
         } else {
             message = "The winner is: " + winner;
@@ -364,6 +372,8 @@ public class NewGameActivity extends AppCompatActivity {
         dialogLayout.addView(cbSaveStats);
 
         String finalWinner = winner;
+        String finalVictoryType = victoryType;
+
         new AlertDialog.Builder(this)
                 .setTitle("Game finished")
                 .setMessage(message)
@@ -372,8 +382,9 @@ public class NewGameActivity extends AppCompatActivity {
                     Log.d("FirebaseStats", "OK button clicked");
                     Log.d("FirebaseStats", "Save stats checkbox is checked: " + cbSaveStats.isChecked());
                     if (cbSaveStats.isChecked()) {
-                        Log.d("FirebaseStats", "Calling saveStatisticsToFirebase...");
+                        Log.d("FirebaseStats", "Calling save methods...");
                         saveStatisticsToFirebase(headerRow, finalWinner);
+                        saveGameResultToFirebase(headerRow, finalWinner, finalVictoryType);
                     } else {
                         Log.d("FirebaseStats", "Statistics NOT saved (checkbox unchecked)");
                     }
@@ -483,6 +494,61 @@ public class NewGameActivity extends AppCompatActivity {
         }
 
         Log.d("FirebaseStats", "=== ALL SAVE OPERATIONS INITIATED ===");
+    }
+
+    private void saveGameResultToFirebase(TableRow headerRow, String winner, String victoryType) {
+        Log.d("FirebaseResults", "=== START SAVING GAME RESULT ===");
+
+        // Crea l'oggetto GameResult
+        String gameId = resultsRef.push().getKey();
+        long timestamp = System.currentTimeMillis();
+
+        GameResult gameResult = new GameResult(gameId, timestamp, gameType, winner, victoryType, numPlayers);
+
+        // Aggiungi i dati di ogni giocatore
+        for (int j = 0; j < numPlayers; j++) {
+            EditText etName = (EditText) headerRow.getChildAt(j + 1);
+            String name = etName.getText().toString().isEmpty()
+                    ? "Player " + (j + 1)
+                    : etName.getText().toString();
+
+            TextView tvTotal = findViewById(1000 + j);
+            int totalScore = Integer.parseInt(tvTotal.getText().toString());
+
+            // Raccogli i punteggi per categoria
+            List<Integer> categoryScores = new ArrayList<>();
+            for (int i = 0; i < scoreCells.length; i++) {
+                String scoreText = scoreCells[i][j].getText().toString();
+                int score = scoreText.isEmpty() ? 0 : Integer.parseInt(scoreText);
+                categoryScores.add(score);
+            }
+
+            GameResult.PlayerResult playerResult = new GameResult.PlayerResult(name, totalScore, categoryScores);
+            gameResult.getPlayers().add(playerResult);
+
+            Log.d("FirebaseResults", "Added player: " + name + " with total: " + totalScore);
+        }
+
+        // Salva su Firebase
+        if (gameId != null) {
+            resultsRef.child(gameId).setValue(gameResult).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Log.d("FirebaseResults", "✅ Game result SAVED successfully!");
+                    runOnUiThread(() ->
+                            Toast.makeText(NewGameActivity.this,
+                                    "Game result saved!",
+                                    Toast.LENGTH_SHORT).show()
+                    );
+                } else {
+                    Log.e("FirebaseResults", "❌ ERROR saving game result", task.getException());
+                    if (task.getException() != null) {
+                        Log.e("FirebaseResults", "Exception: " + task.getException().getMessage());
+                    }
+                }
+            });
+        }
+
+        Log.d("FirebaseResults", "=== GAME RESULT SAVE INITIATED ===");
     }
 
     public static class PlayerStats {

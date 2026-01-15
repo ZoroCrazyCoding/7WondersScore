@@ -10,7 +10,7 @@ import androidx.appcompat.widget.Toolbar;
 
 public class GameMenuActivity extends AppCompatActivity {
 
-    ImageButton btnNewGame, btnStatistics;
+    ImageButton btnNewGame, btnStatistics, btnResults;
     String gameType;
 
     @Override
@@ -39,6 +39,7 @@ public class GameMenuActivity extends AppCompatActivity {
 
         btnNewGame = findViewById(R.id.btnNewGame);
         btnStatistics = findViewById(R.id.btnStatistics);
+        btnResults = findViewById(R.id.btnResults);
 
         // Apri NewGameActivity
         btnNewGame.setOnClickListener(v -> {
@@ -50,7 +51,14 @@ public class GameMenuActivity extends AppCompatActivity {
         // Apri StatisticsActivity
         btnStatistics.setOnClickListener(v -> {
             Intent intent = new Intent(GameMenuActivity.this, StatisticsActivity.class);
-            intent.putExtra("gameType", gameType); // utile se vuoi statistiche separate per Duel vs 7 Wonders
+            intent.putExtra("gameType", gameType);
+            startActivity(intent);
+        });
+
+        // Apri ResultsActivity
+        btnResults.setOnClickListener(v -> {
+            Intent intent = new Intent(GameMenuActivity.this, ResultsActivity.class);
+            intent.putExtra("gameType", gameType);
             startActivity(intent);
         });
     }

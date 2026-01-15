@@ -24,26 +24,42 @@
     <ImageButton
         android:id="@+id/btnNewGame"
         android:layout_width="250dp"
-        android:layout_height="250dp"
-        android:src="@drawable/ic_new_game"
-        android:contentDescription="New Game"
+        android:layout_height="160dp"
         android:background="@drawable/btn_background_rounded"
-        android:scaleType="centerCrop"
         android:clickable="true"
-        android:focusable="true"/>
+        android:contentDescription="New Game"
+        android:focusable="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_new_game" />
 
     <Space
         android:layout_width="match_parent"
-        android:layout_height="24dp"/>
+        android:layout_height="24dp" />
 
     <ImageButton
         android:id="@+id/btnStatistics"
         android:layout_width="250dp"
-        android:layout_height="250dp"
-        android:src="@drawable/ic_statistics"
-        android:contentDescription="Statistics"
+        android:layout_height="160dp"
         android:background="@drawable/btn_background_rounded"
-        android:scaleType="centerCrop"
         android:clickable="true"
-        android:focusable="true"/>
+        android:contentDescription="Statistics"
+        android:focusable="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_statistics" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="24dp" />
+
+    <ImageButton
+        android:id="@+id/btnResults"
+        android:layout_width="250dp"
+        android:layout_height="160dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Results"
+        android:src="@drawable/ic_results" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="32dp" />
 </LinearLayout>

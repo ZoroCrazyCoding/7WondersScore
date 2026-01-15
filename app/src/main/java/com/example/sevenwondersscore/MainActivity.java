@@ -20,8 +20,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 🔥 IMPORTANTE: Configura Firebase per usare il database europeo
-        // Il database è in europe-west1, non negli USA!
         FirebaseDatabase europeanDatabase = FirebaseDatabase.getInstance(
                 "https://sevenwondersscore-default-rtdb.europe-west1.firebasedatabase.app"
         );
