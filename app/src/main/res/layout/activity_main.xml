@@ -1,49 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
+    android:gravity="center"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="#EEEEEE">
+    android:padding="32dp"
+    android:background="#121212">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#000000"
-        android:minHeight="?attr/actionBarSize"
-        app:title="7 Wonders Score"
-        app:titleTextColor="#DAA520" />
+        android:layout_marginBottom="64dp"
+        android:gravity="center"
+        android:text="7 WONDERS\nSCORE"
+        android:textColor="#FFD700"
+        android:textSize="32sp"
+        android:textStyle="bold" />
 
     <ImageButton
         android:id="@+id/btn7Wonders"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scaleType="centerCrop"
-        android:src="@drawable/seven_wonders"
-        android:background="@drawable/btn_background_rounded"
+        android:layout_width="350dp"
+        android:layout_height="250dp"
+        android:src="@drawable/ic_seven_wonders"
         android:contentDescription="7 Wonders"
-        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
         android:clickable="true"
-        android:focusable="true" />
+        android:focusable="true"/>
 
     <Space
         android:layout_width="match_parent"
-        android:layout_height="16dp" />
+        android:layout_height="32dp"/>
 
     <ImageButton
         android:id="@+id/btn7WondersDuel"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scaleType="centerCrop"
-        android:src="@drawable/seven_wonders_duel"
-        android:background="@drawable/btn_background_rounded"
+        android:layout_width="350dp"
+        android:layout_height="250dp"
+        android:src="@drawable/ic_seven_wonders_duel"
         android:contentDescription="7 Wonders Duel"
-        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
         android:clickable="true"
-        android:focusable="true" />
+        android:focusable="true"/>
 
 </LinearLayout>

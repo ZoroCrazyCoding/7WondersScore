@@ -18,12 +18,18 @@ public class GameMenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_menu);
 
+        // Ricevi il tipo di gioco passato da MainActivity
+        gameType = getIntent().getStringExtra("gameType");
+
         // Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         if(getSupportActionBar() != null){
-            getSupportActionBar().setTitle("7 Wonders Score");
+            if ("7wondersduel".equals(gameType))
+                getSupportActionBar().setTitle("7 Wonders Duel");
+            else
+                getSupportActionBar().setTitle("7 Wonders");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
@@ -33,9 +39,6 @@ public class GameMenuActivity extends AppCompatActivity {
         }
 
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
-
-        // Ricevi il tipo di gioco passato da MainActivity
-        gameType = getIntent().getStringExtra("gameType");
 
         btnNewGame = findViewById(R.id.btnNewGame);
         btnStatistics = findViewById(R.id.btnStatistics);

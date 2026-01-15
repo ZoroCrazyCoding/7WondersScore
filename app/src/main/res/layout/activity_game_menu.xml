@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    android:background="#EEEEEE">
+    android:background="#121212">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -15,20 +15,23 @@
         android:background="#000000"
         android:minHeight="?attr/actionBarSize"
         app:title="7 Wonders Score"
-        app:titleTextColor="#DAA520" />
+        app:titleTextColor="#FFD700" />
 
     <Space
         android:layout_width="match_parent"
         android:layout_height="32dp"/>
 
+    <!-- NEW GAME BUTTON -->
     <ImageButton
         android:id="@+id/btnNewGame"
-        android:layout_width="250dp"
-        android:layout_height="160dp"
-        android:background="@drawable/btn_background_rounded"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
         android:clickable="true"
         android:contentDescription="New Game"
         android:focusable="true"
+        android:padding="0dp"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_new_game" />
 
@@ -36,28 +39,37 @@
         android:layout_width="match_parent"
         android:layout_height="24dp" />
 
+    <!-- RESULTS BUTTON -->
     <ImageButton
-        android:id="@+id/btnStatistics"
-        android:layout_width="250dp"
-        android:layout_height="160dp"
-        android:background="@drawable/btn_background_rounded"
+        android:id="@+id/btnResults"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
         android:clickable="true"
-        android:contentDescription="Statistics"
+        android:contentDescription="Results"
         android:focusable="true"
+        android:padding="0dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_statistics" />
+        android:src="@drawable/ic_results" />
 
     <Space
         android:layout_width="match_parent"
         android:layout_height="24dp" />
 
+    <!-- STATISTICS BUTTON -->
     <ImageButton
-        android:id="@+id/btnResults"
-        android:layout_width="250dp"
-        android:layout_height="160dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Results"
-        android:src="@drawable/ic_results" />
+        android:id="@+id/btnStatistics"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:contentDescription="Statistics"
+        android:focusable="true"
+        android:padding="0dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_statistics" />
 
     <Space
         android:layout_width="match_parent"

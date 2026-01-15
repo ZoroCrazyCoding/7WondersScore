@@ -4,10 +4,12 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -71,6 +73,84 @@ public class ResultsActivity extends AppCompatActivity {
         loadResults();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Aggiungi il pulsante Reset nella toolbar
+        MenuItem resetItem = menu.add(Menu.NONE, 1, Menu.NONE, "Reset");
+        resetItem.setIcon(android.R.drawable.ic_menu_delete);
+        resetItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        // Colora l'icona di oro
+        if(resetItem.getIcon() != null) {
+            resetItem.getIcon().setTint(Color.parseColor("#FFD700"));
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == 1) {
+            // Pulsante Reset premuto
+            showFirstConfirmationDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showFirstConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete All Data")
+                .setMessage("Do you want to delete all data in game results?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    // Mostra secondo dialog di conferma
+                    showSecondConfirmationDialog();
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    // Chiudi semplicemente il dialog
+                    dialog.dismiss();
+                })
+                .setCancelable(true)
+                .show();
+    }
+
+    private void showSecondConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Are You Sure?")
+                .setMessage("This action cannot be undone. All game results will be permanently deleted.")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    // Elimina tutti i dati
+                    deleteAllGameResults();
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    // Chiudi semplicemente il dialog
+                    dialog.dismiss();
+                })
+                .setCancelable(true)
+                .show();
+    }
+
+    private void deleteAllGameResults() {
+        progressBar.setVisibility(View.VISIBLE);
+
+        resultsRef.removeValue().addOnCompleteListener(task -> {
+            progressBar.setVisibility(View.GONE);
+
+            if(task.isSuccessful()) {
+                Log.d("ResultsActivity", "All game results deleted successfully");
+                Toast.makeText(this, "All game results deleted", Toast.LENGTH_SHORT).show();
+
+                // Ricarica la lista (che sarà vuota)
+                loadResults();
+            } else {
+                Log.e("ResultsActivity", "Error deleting game results", task.getException());
+                Toast.makeText(this, "Error deleting data: " +
+                                (task.getException() != null ? task.getException().getMessage() : "Unknown error"),
+                        Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     private void loadResults() {
         progressBar.setVisibility(View.VISIBLE);
         tvNoData.setVisibility(View.GONE);
@@ -119,10 +199,10 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     private void addResultCard(GameResult result) {
-        // Card container
+        // Card container con sfondo scuro
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackgroundResource(android.R.drawable.dialog_holo_light_frame);
+        card.setBackgroundColor(Color.parseColor("#2C2C2C"));
         card.setPadding(32, 24, 32, 24);
 
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
@@ -133,20 +213,20 @@ public class ResultsActivity extends AppCompatActivity {
         card.setClickable(true);
         card.setFocusable(true);
 
-        // Data
+        // Data - testo chiaro
         TextView tvDate = new TextView(this);
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         tvDate.setText(sdf.format(new Date(result.getTimestamp())));
         tvDate.setTextSize(14);
-        tvDate.setTextColor(Color.GRAY);
+        tvDate.setTextColor(Color.parseColor("#B0B0B0"));
         card.addView(tvDate);
 
-        // Winner
+        // Winner - testo oro
         TextView tvWinner = new TextView(this);
         String winnerText = "🏆 Winner: " + result.getWinnerName();
         tvWinner.setText(winnerText);
         tvWinner.setTextSize(18);
-        tvWinner.setTextColor(Color.parseColor("#1976D2"));
+        tvWinner.setTextColor(Color.parseColor("#FFD700"));
         tvWinner.setTypeface(null, android.graphics.Typeface.BOLD);
         tvWinner.setPadding(0, 8, 0, 0);
         card.addView(tvWinner);
@@ -172,7 +252,7 @@ public class ResultsActivity extends AppCompatActivity {
             TextView tvPlayers = new TextView(this);
             tvPlayers.setText(result.getNumPlayers() + " players");
             tvPlayers.setTextSize(14);
-            tvPlayers.setTextColor(Color.GRAY);
+            tvPlayers.setTextColor(Color.parseColor("#B0B0B0"));
             tvPlayers.setPadding(0, 4, 0, 0);
             card.addView(tvPlayers);
         }

@@ -2,12 +2,17 @@ package com.example.sevenwondersscore;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,6 +24,8 @@ public class GameDetailActivity extends AppCompatActivity {
     TableLayout tableDetail;
     TextView tvGameInfo;
     String gameType;
+    GameResult currentGameResult;
+    DatabaseReference resultsRef;
 
     String[] symbols7Wonders = {"⛰","🪙","⚔️","🟦","🟧","🟩","🟪"};
     String[] symbolsDuel = {"🟦","🟩","🟨","🟪","⛰","🟢","🪙","⚔️"};
@@ -44,12 +51,24 @@ public class GameDetailActivity extends AppCompatActivity {
         tableDetail = findViewById(R.id.tableDetail);
         tvGameInfo = findViewById(R.id.tvGameInfo);
 
+        // Bottone Delete dal layout XML
+        Button btnDeleteGame = findViewById(R.id.btnDeleteGame);
+        btnDeleteGame.setOnClickListener(v -> showDeleteConfirmation());
+
         // Ricevi i dati della partita
-        GameResult gameResult = (GameResult) getIntent().getSerializableExtra("gameResult");
+        currentGameResult = (GameResult) getIntent().getSerializableExtra("gameResult");
         gameType = getIntent().getStringExtra("gameType");
 
-        if(gameResult != null) {
-            displayGameDetails(gameResult);
+        // Riferimento Firebase
+        FirebaseDatabase europeanDatabase = FirebaseDatabase.getInstance(
+                "https://sevenwondersscore-default-rtdb.europe-west1.firebasedatabase.app"
+        );
+        resultsRef = europeanDatabase
+                .getReference("game_results")
+                .child(gameType);
+
+        if(currentGameResult != null) {
+            displayGameDetails(currentGameResult);
         }
     }
 
@@ -62,14 +81,17 @@ public class GameDetailActivity extends AppCompatActivity {
         String infoText = "Date: " + sdf.format(new Date(result.getTimestamp())) + "\n";
         infoText += "Winner: " + result.getWinnerName() + "\n";
 
-        if(result.getVictoryType() != null && !result.getVictoryType().equals("points")) {
-            if(result.getVictoryType().equals("military")) {
-                infoText += "Victory Type: ⚔️ Military Supremacy\n";
-            } else if(result.getVictoryType().equals("scientific")) {
-                infoText += "Victory Type: 🔬 Scientific Supremacy\n";
+        // Victory Type - SOLO per Duel (in 7 Wonders è sempre Points quindi non mostrarlo)
+        if(isDuel) {
+            if(result.getVictoryType() != null && !result.getVictoryType().equals("points")) {
+                if(result.getVictoryType().equals("military")) {
+                    infoText += "Victory Type: ⚔️ Military Supremacy\n";
+                } else if(result.getVictoryType().equals("scientific")) {
+                    infoText += "Victory Type: 🔬 Scientific Supremacy\n";
+                }
+            } else {
+                infoText += "Victory Type: Points\n";
             }
-        } else {
-            infoText += "Victory Type: Points\n";
         }
 
         // Mostra numero giocatori SOLO SE NON È DUEL (2 giocatori)
@@ -82,9 +104,9 @@ public class GameDetailActivity extends AppCompatActivity {
         // Crea tabella
         tableDetail.removeAllViews();
 
-        // Header con nomi giocatori
+        // Header con nomi giocatori - DARK THEME
         TableRow headerRow = new TableRow(this);
-        headerRow.setBackgroundColor(Color.parseColor("#E0E0E0"));
+        headerRow.setBackgroundColor(Color.parseColor("#2C2C2C"));
         headerRow.setPadding(0, 16, 0, 16);
         headerRow.setGravity(Gravity.CENTER);
 
@@ -93,6 +115,7 @@ public class GameDetailActivity extends AppCompatActivity {
         tvHeaderSymbol.setGravity(Gravity.CENTER);
         tvHeaderSymbol.setPadding(16, 8, 16, 8);
         tvHeaderSymbol.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvHeaderSymbol.setTextColor(Color.parseColor("#FFD700"));
         headerRow.addView(tvHeaderSymbol);
 
         for(GameResult.PlayerResult player : result.getPlayers()) {
@@ -103,9 +126,11 @@ public class GameDetailActivity extends AppCompatActivity {
             tvName.setTypeface(null, android.graphics.Typeface.BOLD);
             tvName.setTextSize(14);
 
-            // Evidenzia il vincitore
+            // Evidenzia il vincitore in oro
             if(player.getName().equals(result.getWinnerName())) {
-                tvName.setTextColor(Color.parseColor("#1976D2"));
+                tvName.setTextColor(Color.parseColor("#FFD700"));
+            } else {
+                tvName.setTextColor(Color.parseColor("#FFFFFF"));
             }
 
             headerRow.addView(tvName);
@@ -136,6 +161,7 @@ public class GameDetailActivity extends AppCompatActivity {
                 tvScore.setGravity(Gravity.CENTER);
                 tvScore.setPadding(16, 8, 16, 8);
                 tvScore.setTextSize(16);
+                tvScore.setTextColor(Color.parseColor("#FFFFFF"));
                 row.addView(tvScore);
             }
 
@@ -145,13 +171,13 @@ public class GameDetailActivity extends AppCompatActivity {
             View divider = new View(this);
             divider.setLayoutParams(new TableLayout.LayoutParams(
                     TableLayout.LayoutParams.MATCH_PARENT, 1));
-            divider.setBackgroundColor(Color.parseColor("#CCCCCC"));
+            divider.setBackgroundColor(Color.parseColor("#404040"));
             tableDetail.addView(divider);
         }
 
-        // Riga totale
+        // Riga totale - DARK THEME
         TableRow totalRow = new TableRow(this);
-        totalRow.setBackgroundColor(Color.parseColor("#F5F5F5"));
+        totalRow.setBackgroundColor(Color.parseColor("#1E1E1E"));
         totalRow.setPadding(0, 16, 0, 16);
         totalRow.setGravity(Gravity.CENTER);
 
@@ -161,6 +187,7 @@ public class GameDetailActivity extends AppCompatActivity {
         tvTotalLabel.setPadding(16, 8, 16, 8);
         tvTotalLabel.setTypeface(null, android.graphics.Typeface.BOLD);
         tvTotalLabel.setTextSize(22);
+        tvTotalLabel.setTextColor(Color.parseColor("#FFD700"));
         totalRow.addView(tvTotalLabel);
 
         for(GameResult.PlayerResult player : result.getPlayers()) {
@@ -171,9 +198,11 @@ public class GameDetailActivity extends AppCompatActivity {
             tvTotal.setTypeface(null, android.graphics.Typeface.BOLD);
             tvTotal.setTextSize(18);
 
-            // Evidenzia il vincitore
+            // Evidenzia il vincitore in oro
             if(player.getName().equals(result.getWinnerName())) {
-                tvTotal.setTextColor(Color.parseColor("#1976D2"));
+                tvTotal.setTextColor(Color.parseColor("#FFD700"));
+            } else {
+                tvTotal.setTextColor(Color.parseColor("#FFFFFF"));
             }
 
             totalRow.addView(tvTotal);
@@ -243,5 +272,42 @@ public class GameDetailActivity extends AppCompatActivity {
 
             tableDetail.addView(cbRow);
         }
+    }
+
+    private void showDeleteConfirmation() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Game")
+                .setMessage("Are you sure you want to delete this game? This action cannot be undone.")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    deleteGame();
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .setCancelable(true)
+                .show();
+    }
+
+    private void deleteGame() {
+        if(currentGameResult == null || currentGameResult.getGameId() == null) {
+            Toast.makeText(this, "Error: Game ID not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String gameId = currentGameResult.getGameId();
+        Log.d("GameDetailActivity", "Deleting game with ID: " + gameId);
+
+        resultsRef.child(gameId).removeValue().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                Log.d("GameDetailActivity", "Game deleted successfully");
+                Toast.makeText(this, "Game deleted successfully", Toast.LENGTH_SHORT).show();
+                finish(); // Torna alla schermata precedente
+            } else {
+                Log.e("GameDetailActivity", "Error deleting game", task.getException());
+                Toast.makeText(this, "Error deleting game: " +
+                                (task.getException() != null ? task.getException().getMessage() : "Unknown error"),
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

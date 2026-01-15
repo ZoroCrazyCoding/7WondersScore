@@ -25,7 +25,6 @@ public class NewGameActivity extends AppCompatActivity {
     String gameType;
 
     List<CheckBox> duelCheckboxes = new ArrayList<>();
-    DatabaseReference statsRef;
     DatabaseReference resultsRef;
 
     String[] symbols7Wonders = {"⛰","🪙","⚔️","🟦","🟧","🟩","🟪"};
@@ -40,7 +39,6 @@ public class NewGameActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if(getSupportActionBar()!=null){
-            getSupportActionBar().setTitle("New Game");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
@@ -56,9 +54,9 @@ public class NewGameActivity extends AppCompatActivity {
         gameType = getIntent().getStringExtra("gameType");
         isDuel = "7wondersduel".equals(gameType);
 
-        Log.d("FirebaseStats", "=== NewGameActivity onCreate ===");
-        Log.d("FirebaseStats", "Game Type received: " + gameType);
-        Log.d("FirebaseStats", "Is Duel: " + isDuel);
+        Log.d("FirebaseResults", "=== NewGameActivity onCreate ===");
+        Log.d("FirebaseResults", "Game Type received: " + gameType);
+        Log.d("FirebaseResults", "Is Duel: " + isDuel);
 
         // Riferimento Firebase per questo tipo di gioco
         // IMPORTANTE: Usa il database europeo!
@@ -66,16 +64,11 @@ public class NewGameActivity extends AppCompatActivity {
                 "https://sevenwondersscore-default-rtdb.europe-west1.firebasedatabase.app"
         );
 
-        statsRef = europeanDatabase
-                .getReference("statistics")
-                .child(gameType != null ? gameType : "7wonders");
-
         resultsRef = europeanDatabase
                 .getReference("game_results")
                 .child(gameType != null ? gameType : "7wonders");
 
-        Log.d("FirebaseStats", "Firebase Reference created: " + statsRef.toString());
-        Log.d("FirebaseStats", "Results Reference created: " + resultsRef.toString());
+        Log.d("FirebaseResults", "Results Reference created: " + resultsRef.toString());
 
         if (isDuel) {
             numPlayers = 2;
@@ -128,49 +121,96 @@ public class NewGameActivity extends AppCompatActivity {
         int rows = symbols.length;
         scoreCells = new EditText[rows][numPlayers];
 
-        // Header
+        // Header con sfondo grigio scuro come GameDetailActivity
         TableRow headerRow = new TableRow(this);
+        headerRow.setBackgroundColor(Color.parseColor("#2C2C2C"));
+        headerRow.setPadding(0, 16, 0, 16);
+        headerRow.setGravity(Gravity.CENTER);
+
         TextView tvHeaderSymbol = new TextView(this);
-        tvHeaderSymbol.setText(" ");
+        tvHeaderSymbol.setText("Category");
         tvHeaderSymbol.setGravity(Gravity.CENTER);
-        tvHeaderSymbol.setLayoutParams(centeredParams());
+        tvHeaderSymbol.setPadding(16, 8, 16, 8);
+        tvHeaderSymbol.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvHeaderSymbol.setTextSize(16);
+        tvHeaderSymbol.setTextColor(Color.parseColor("#FFD700"));
         headerRow.addView(tvHeaderSymbol);
 
         for(int j=0;j<numPlayers;j++){
             EditText etName = new EditText(this);
             etName.setHint("Player "+(j+1));
             etName.setGravity(Gravity.CENTER);
-            etName.setLayoutParams(centeredParams());
+            etName.setPadding(16, 8, 16, 8);
+            etName.setBackgroundColor(Color.TRANSPARENT);
+            etName.setTypeface(null, android.graphics.Typeface.BOLD);
+            etName.setTextSize(14);
+            etName.setTextColor(Color.parseColor("#FFFFFF"));
+            etName.setHintTextColor(Color.parseColor("#808080"));
+            TableRow.LayoutParams params = new TableRow.LayoutParams(
+                    TableRow.LayoutParams.WRAP_CONTENT,
+                    TableRow.LayoutParams.WRAP_CONTENT
+            );
+            params.gravity = Gravity.CENTER;
+            etName.setLayoutParams(params);
             headerRow.addView(etName);
         }
 
         if(!isDuel && numPlayers>4){
             TextView tvHeaderSymbolEnd = new TextView(this);
-            tvHeaderSymbolEnd.setText(" ");
+            tvHeaderSymbolEnd.setText("Category");
             tvHeaderSymbolEnd.setGravity(Gravity.CENTER);
-            tvHeaderSymbolEnd.setLayoutParams(centeredParams());
+            tvHeaderSymbolEnd.setPadding(16, 8, 16, 8);
+            tvHeaderSymbolEnd.setTypeface(null, android.graphics.Typeface.BOLD);
+            tvHeaderSymbolEnd.setTextSize(16);
+            tvHeaderSymbolEnd.setTextColor(Color.parseColor("#FFD700"));
             headerRow.addView(tvHeaderSymbolEnd);
         }
 
         tableMain.addView(headerRow);
 
-        // Righe simboli + celle punteggio
+        // Righe simboli + celle punteggio con separatori
         for(int i=0;i<rows;i++){
             TableRow row = new TableRow(this);
+            row.setPadding(0, 8, 0, 8);
+            row.setGravity(Gravity.CENTER);
+
             TextView tvSymbol = new TextView(this);
             tvSymbol.setText(symbols[i]);
             tvSymbol.setTextSize(24);
             tvSymbol.setGravity(Gravity.CENTER);
-            tvSymbol.setLayoutParams(centeredParams());
+            tvSymbol.setPadding(16, 8, 16, 8);
             row.addView(tvSymbol);
 
             for(int j=0;j<numPlayers;j++){
                 EditText etScore = new EditText(this);
                 etScore.setHint("0");
-                etScore.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-                etScore.setEms(2);
+
+                // Permetti numeri negativi SOLO per la riga delle battaglie (⚔️) in 7 WONDERS
+                // 7 Wonders: simbolo ⚔️ è in posizione 2 → numeri negativi OK
+                // Duel: TUTTI i campi sono solo positivi
+                boolean isBattleRowIn7Wonders = (!isDuel && i == 2);
+                if(isBattleRowIn7Wonders) {
+                    // Permetti numeri negativi (con segno) - SOLO 7 WONDERS
+                    etScore.setInputType(android.text.InputType.TYPE_CLASS_NUMBER |
+                            android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+                } else {
+                    // Solo numeri positivi (per Duel e per tutte le altre righe di 7 Wonders)
+                    etScore.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                }
+
                 etScore.setGravity(Gravity.CENTER);
-                etScore.setLayoutParams(centeredParams());
+                etScore.setPadding(16, 8, 16, 8);
+                etScore.setBackgroundColor(Color.TRANSPARENT);
+                etScore.setTextSize(16);
+                etScore.setTextColor(Color.parseColor("#FFFFFF"));
+                etScore.setHintTextColor(Color.parseColor("#808080"));
+                TableRow.LayoutParams params = new TableRow.LayoutParams(
+                        TableRow.LayoutParams.WRAP_CONTENT,
+                        TableRow.LayoutParams.WRAP_CONTENT
+                );
+                params.gravity = Gravity.CENTER;
+                etScore.setLayoutParams(params);
+
                 final int r=i, c=j;
                 etScore.addTextChangedListener(new android.text.TextWatcher(){
                     public void afterTextChanged(android.text.Editable s){ updateTotals(); }
@@ -186,30 +226,36 @@ public class NewGameActivity extends AppCompatActivity {
                 tvSymbolEnd.setText(symbols[i]);
                 tvSymbolEnd.setTextSize(24);
                 tvSymbolEnd.setGravity(Gravity.CENTER);
-                tvSymbolEnd.setLayoutParams(centeredParams());
+                tvSymbolEnd.setPadding(16, 8, 16, 8);
                 row.addView(tvSymbolEnd);
             }
 
             tableMain.addView(row);
         }
 
-        // Totale
+        // Totale con sfondo grigio scuro
         TableRow totalRow = new TableRow(this);
+        totalRow.setBackgroundColor(Color.parseColor("#1E1E1E"));
+        totalRow.setPadding(0, 16, 0, 16);
+        totalRow.setGravity(Gravity.CENTER);
+
         TextView tvSum = new TextView(this);
         tvSum.setText("∑");
         tvSum.setTextSize(22);
         tvSum.setTypeface(null, android.graphics.Typeface.BOLD);
         tvSum.setGravity(Gravity.CENTER);
-        tvSum.setLayoutParams(centeredParams());
+        tvSum.setPadding(16, 8, 16, 8);
+        tvSum.setTextColor(Color.parseColor("#FFD700"));
         totalRow.addView(tvSum);
 
         for(int j=0;j<numPlayers;j++){
             TextView tvTotal = new TextView(this);
             tvTotal.setText("0");
             tvTotal.setGravity(Gravity.CENTER);
-            tvTotal.setTextSize(22);
+            tvTotal.setPadding(16, 8, 16, 8);
+            tvTotal.setTextSize(18);
             tvTotal.setTypeface(null, android.graphics.Typeface.BOLD);
-            tvTotal.setLayoutParams(centeredParams());
+            tvTotal.setTextColor(Color.parseColor("#FFFFFF"));
             tvTotal.setId(1000+j);
             totalRow.addView(tvTotal);
         }
@@ -217,6 +263,7 @@ public class NewGameActivity extends AppCompatActivity {
         if(!isDuel && numPlayers>4){
             TextView tvPlaceholder = new TextView(this);
             tvPlaceholder.setText(" ");
+            tvPlaceholder.setPadding(16, 8, 16, 8);
             totalRow.addView(tvPlaceholder);
         }
 
@@ -225,15 +272,24 @@ public class NewGameActivity extends AppCompatActivity {
         // Checkbox per Duel
         if(isDuel){
             TableRow cbRow = new TableRow(this);
+            cbRow.setPadding(0, 16, 0, 0);
+            cbRow.setGravity(Gravity.CENTER);
+
             TextView tvEmpty = new TextView(this);
             tvEmpty.setText(" ");
+            tvEmpty.setPadding(16, 8, 16, 8);
             cbRow.addView(tvEmpty);
 
             for(int j=0;j<numPlayers;j++){
                 LinearLayout ll = new LinearLayout(this);
                 ll.setOrientation(LinearLayout.VERTICAL);
                 ll.setGravity(Gravity.CENTER);
-                ll.setLayoutParams(centeredParams());
+                TableRow.LayoutParams llParams = new TableRow.LayoutParams(
+                        TableRow.LayoutParams.WRAP_CONTENT,
+                        TableRow.LayoutParams.WRAP_CONTENT
+                );
+                llParams.gravity = Gravity.CENTER;
+                ll.setLayoutParams(llParams);
 
                 CheckBox cbRed = new CheckBox(this);
                 CheckBox cbGreen = new CheckBox(this);
@@ -259,8 +315,14 @@ public class NewGameActivity extends AppCompatActivity {
         for(int j=0;j<numPlayers;j++){
             int sum=0;
             for(int i=0;i<scoreCells.length;i++){
-                String s = scoreCells[i][j].getText().toString();
-                if(!s.isEmpty()) sum+=Integer.parseInt(s);
+                String s = scoreCells[i][j].getText().toString().trim();
+                if(!s.isEmpty() && !s.equals("-")) { // Ignora "-" da solo (mentre si digita)
+                    try {
+                        sum += Integer.parseInt(s);
+                    } catch (NumberFormatException e) {
+                        // Ignora errori di parsing (es. input incompleto)
+                    }
+                }
             }
             TextView tv = findViewById(1000+j);
             tv.setText(String.valueOf(sum));
@@ -270,6 +332,9 @@ public class NewGameActivity extends AppCompatActivity {
     private void setupFinishedButton(){
         btnFinished = new Button(this);
         btnFinished.setText("Finished");
+        btnFinished.setBackgroundColor(Color.parseColor("#FFD700"));
+        btnFinished.setTextColor(Color.parseColor("#000000"));
+        btnFinished.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.CENTER_HORIZONTAL;
         params.topMargin = 20;
@@ -279,77 +344,96 @@ public class NewGameActivity extends AppCompatActivity {
     }
 
     private void finishGame() {
-        Log.d("FirebaseStats", "=== finishGame() called ===");
+        TableRow headerRow = (TableRow) tableMain.getChildAt(0);
 
-        boolean missingData = false;
+        // ===== VALIDAZIONE DATI =====
 
-        for (int i = 0; i < scoreCells.length; i++) {
-            for (int j = 0; j < numPlayers; j++) {
-                if (scoreCells[i][j].getText().toString().isEmpty()) {
-                    missingData = true;
+        // 1. Controlla che tutti i nomi siano compilati
+        for (int j = 0; j < numPlayers; j++) {
+            EditText etName = (EditText) headerRow.getChildAt(j + 1);
+            if (etName.getText().toString().trim().isEmpty()) {
+                showErrorDialog("Error: missing data\n\nPlease enter all player names.");
+                return;
+            }
+        }
+
+        // 2. Per 7 Wonders: controlla che TUTTI i campi punteggio siano compilati
+        if (!isDuel) {
+            for (int i = 0; i < scoreCells.length; i++) {
+                for (int j = 0; j < numPlayers; j++) {
+                    if (scoreCells[i][j].getText().toString().trim().isEmpty()) {
+                        showErrorDialog("Error: missing data\n\nPlease fill in all score fields.");
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 3. Per Duel: controlla vittoria per supremazia
+        boolean hasSupremacy = false;
+        if (isDuel) {
+            for (CheckBox cb : duelCheckboxes) {
+                if (cb.isChecked()) {
+                    hasSupremacy = true;
                     break;
                 }
             }
-            if (missingData) break;
+
+            // Se NON c'è supremazia, TUTTI i campi devono essere compilati
+            if (!hasSupremacy) {
+                for (int i = 0; i < scoreCells.length; i++) {
+                    for (int j = 0; j < numPlayers; j++) {
+                        if (scoreCells[i][j].getText().toString().trim().isEmpty()) {
+                            showErrorDialog("Error: missing data\n\nPlease fill in all score fields or select a supremacy victory.");
+                            return;
+                        }
+                    }
+                }
+            }
         }
 
+        // ===== CALCOLO VINCITORE =====
+
+        int maxScore = -1;
+        String winner = "";
         int winnerColumn = -1;
         int winnerCheckIndex = -1;
 
+        // Check supremacy for Duel
         if (isDuel) {
-            Log.d("FirebaseStats", "Checking Duel checkboxes...");
-            for (int j = 0; j < duelCheckboxes.size(); j++) {
-                CheckBox cb = duelCheckboxes.get(j);
-                if (cb.isChecked()) {
-                    winnerColumn = j / 2;
-                    winnerCheckIndex = j % 2;
-                    missingData = false;
-                    Log.d("FirebaseStats", "Duel winner found: column " + winnerColumn + ", type " + winnerCheckIndex);
+            for (int i = 0; i < duelCheckboxes.size(); i++) {
+                if (duelCheckboxes.get(i).isChecked()) {
+                    int playerIndex = i / 2;
+                    winnerColumn = playerIndex;
+                    winnerCheckIndex = i % 2;
+                    EditText etName = (EditText) headerRow.getChildAt(playerIndex + 1);
+                    winner = etName.getText().toString().trim();
+                    Log.d("FirebaseResults", "Supremacy victory detected for column " + winnerColumn);
                     break;
                 }
             }
         }
 
-        if (missingData) {
-            Log.w("FirebaseStats", "Missing data detected - showing error dialog");
-            new AlertDialog.Builder(this)
-                    .setTitle("Error")
-                    .setMessage("Missing data")
-                    .setPositiveButton("OK", null)
-                    .show();
-            return;
-        }
+        // Determina vincitore per punteggio se non c'è supremazia
+        if (winnerColumn == -1) {
+            for (int j = 0; j < numPlayers; j++) {
+                TextView tvTotal = findViewById(1000 + j);
+                int total = Integer.parseInt(tvTotal.getText().toString());
+                EditText etName = (EditText) headerRow.getChildAt(j + 1);
+                String name = etName.getText().toString().trim();
 
-        // Determina il vincitore
-        String winner = "";
-        TableRow headerRow = (TableRow) tableMain.getChildAt(0);
-        int maxScore = -1;
-
-        Log.d("FirebaseStats", "Determining winner...");
-        for (int j = 0; j < numPlayers; j++) {
-            TextView tvTotal = findViewById(1000 + j);
-            int total = Integer.parseInt(tvTotal.getText().toString());
-
-            EditText etName = (EditText) headerRow.getChildAt(j + 1);
-            String name = etName.getText().toString().isEmpty()
-                    ? "Player " + (j + 1)
-                    : etName.getText().toString();
-
-            Log.d("FirebaseStats", "Player " + (j+1) + ": " + name + " - Score: " + total);
-
-            if (isDuel && winnerColumn != -1) {
-                if (j == winnerColumn) {
+                if (isDuel && j == winnerColumn) {
                     winner = name;
-                    Log.d("FirebaseStats", "Duel winner: " + winner);
+                    Log.d("FirebaseResults", "Duel winner: " + winner);
+                } else if (total > maxScore) {
+                    maxScore = total;
+                    winner = name;
+                    Log.d("FirebaseResults", "New high score: " + winner + " with " + maxScore);
                 }
-            } else if (total > maxScore) {
-                maxScore = total;
-                winner = name;
-                Log.d("FirebaseStats", "New high score: " + winner + " with " + maxScore);
             }
         }
 
-        Log.d("FirebaseStats", "Final winner: " + winner);
+        Log.d("FirebaseResults", "Final winner: " + winner);
 
         String message;
         String victoryType = "points";
@@ -361,139 +445,53 @@ public class NewGameActivity extends AppCompatActivity {
             message = "The winner is: " + winner;
         }
 
-        CheckBox cbSaveStats = new CheckBox(this);
-        cbSaveStats.setText("Save statistics");
-        cbSaveStats.setChecked(true);
-        Log.d("FirebaseStats", "Save statistics checkbox created and checked");
+        String finalWinner = winner;
+        String finalVictoryType = victoryType;
+
+        // Checkbox "Save results" (checked di default)
+        CheckBox cbSaveResults = new CheckBox(this);
+        cbSaveResults.setText("Save results");
+        cbSaveResults.setTextColor(Color.parseColor("#FFFFFF"));
+        cbSaveResults.setChecked(true);
+        Log.d("FirebaseResults", "Save results checkbox created and checked");
 
         LinearLayout dialogLayout = new LinearLayout(this);
         dialogLayout.setOrientation(LinearLayout.VERTICAL);
         dialogLayout.setPadding(50, 20, 50, 10);
-        dialogLayout.addView(cbSaveStats);
-
-        String finalWinner = winner;
-        String finalVictoryType = victoryType;
+        dialogLayout.addView(cbSaveResults);
 
         new AlertDialog.Builder(this)
                 .setTitle("Game finished")
                 .setMessage(message)
                 .setView(dialogLayout)
                 .setPositiveButton("OK", (d, w) -> {
-                    Log.d("FirebaseStats", "OK button clicked");
-                    Log.d("FirebaseStats", "Save stats checkbox is checked: " + cbSaveStats.isChecked());
-                    if (cbSaveStats.isChecked()) {
-                        Log.d("FirebaseStats", "Calling save methods...");
-                        saveStatisticsToFirebase(headerRow, finalWinner);
+                    Log.d("FirebaseResults", "OK button clicked");
+                    Log.d("FirebaseResults", "Save results checkbox is checked: " + cbSaveResults.isChecked());
+                    if (cbSaveResults.isChecked()) {
+                        Log.d("FirebaseResults", "Saving game result...");
                         saveGameResultToFirebase(headerRow, finalWinner, finalVictoryType);
                     } else {
-                        Log.d("FirebaseStats", "Statistics NOT saved (checkbox unchecked)");
+                        Log.d("FirebaseResults", "Results NOT saved (checkbox unchecked)");
                     }
                     finish();
                 })
                 .setNegativeButton("Cancel", (d, w) -> {
-                    Log.d("FirebaseStats", "Cancel button clicked - not saving stats");
-                    finish();
+                    Log.d("FirebaseResults", "Cancel button clicked - staying on page");
+                    d.dismiss(); // Chiude solo il dialog, NON chiama finish()
                 })
                 .setCancelable(false)
                 .show();
 
-        Log.d("FirebaseStats", "Dialog shown to user");
+        Log.d("FirebaseResults", "Dialog shown to user");
     }
 
-    private void saveStatisticsToFirebase(TableRow headerRow, String winner) {
-        Log.d("FirebaseStats", "=== START SAVING STATISTICS ===");
-        Log.d("FirebaseStats", "Game Type: " + gameType);
-        Log.d("FirebaseStats", "Number of Players: " + numPlayers);
-        Log.d("FirebaseStats", "Winner: " + winner);
-        Log.d("FirebaseStats", "Stats Reference Path: " + statsRef.toString());
-
-        // Conta quanti salvataggi devono completare
-        final int[] completedSaves = {0};
-        final int totalSaves = numPlayers;
-
-        // Salva le statistiche per ogni giocatore
-        for (int j = 0; j < numPlayers; j++) {
-            EditText etName = (EditText) headerRow.getChildAt(j + 1);
-            String name = etName.getText().toString().isEmpty()
-                    ? "Player " + (j + 1)
-                    : etName.getText().toString();
-
-            boolean isWinner = name.equals(winner);
-
-            Log.d("FirebaseStats", "Processing player " + (j+1) + ": " + name + " (isWinner: " + isWinner + ")");
-
-            DatabaseReference playerRef = statsRef.child(name);
-            Log.d("FirebaseStats", "Player Reference Path: " + playerRef.toString());
-
-            // Prima leggi i dati esistenti
-            playerRef.get().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    Log.d("FirebaseStats", "Read completed for: " + name);
-
-                    PlayerStats stats;
-                    DataSnapshot snapshot = task.getResult();
-
-                    if (snapshot.exists()) {
-                        stats = snapshot.getValue(PlayerStats.class);
-                        Log.d("FirebaseStats", "Existing stats for " + name +
-                                " - Played: " + stats.gamesPlayed +
-                                ", Won: " + stats.gamesWon +
-                                ", Lost: " + stats.gamesLost);
-                    } else {
-                        Log.d("FirebaseStats", "Creating new PlayerStats for: " + name);
-                        stats = new PlayerStats();
-                    }
-
-                    // Incrementa le statistiche
-                    stats.gamesPlayed++;
-                    if (isWinner) {
-                        stats.gamesWon++;
-                    } else {
-                        stats.gamesLost++;
-                    }
-
-                    Log.d("FirebaseStats", "Updated stats for " + name +
-                            " - Played: " + stats.gamesPlayed +
-                            ", Won: " + stats.gamesWon +
-                            ", Lost: " + stats.gamesLost);
-
-                    // Salva con setValue
-                    playerRef.setValue(stats).addOnCompleteListener(saveTask -> {
-                        if (saveTask.isSuccessful()) {
-                            Log.d("FirebaseStats", "✅ Statistics SAVED for " + name);
-                            completedSaves[0]++;
-
-                            if (completedSaves[0] == totalSaves) {
-                                Log.d("FirebaseStats", "🎉 ALL STATISTICS SAVED SUCCESSFULLY!");
-                                runOnUiThread(() ->
-                                        Toast.makeText(NewGameActivity.this,
-                                                "Statistics saved successfully!",
-                                                Toast.LENGTH_SHORT).show()
-                                );
-                            }
-                        } else {
-                            Log.e("FirebaseStats", "❌ ERROR saving stats for " + name, saveTask.getException());
-                            if (saveTask.getException() != null) {
-                                Log.e("FirebaseStats", "Exception: " + saveTask.getException().getMessage());
-                            }
-                            runOnUiThread(() ->
-                                    Toast.makeText(NewGameActivity.this,
-                                            "Error saving statistics for " + name,
-                                            Toast.LENGTH_SHORT).show()
-                            );
-                        }
-                    });
-
-                } else {
-                    Log.e("FirebaseStats", "❌ ERROR reading existing stats for " + name, task.getException());
-                    if (task.getException() != null) {
-                        Log.e("FirebaseStats", "Read Exception: " + task.getException().getMessage());
-                    }
-                }
-            });
-        }
-
-        Log.d("FirebaseStats", "=== ALL SAVE OPERATIONS INITIATED ===");
+    private void showErrorDialog(String message) {
+        new AlertDialog.Builder(this)
+                .setTitle("Error")
+                .setMessage(message)
+                .setPositiveButton("OK", (d, w) -> d.dismiss())
+                .setCancelable(true)
+                .show();
     }
 
     private void saveGameResultToFirebase(TableRow headerRow, String winner, String victoryType) {
@@ -549,21 +547,5 @@ public class NewGameActivity extends AppCompatActivity {
         }
 
         Log.d("FirebaseResults", "=== GAME RESULT SAVE INITIATED ===");
-    }
-
-    public static class PlayerStats {
-        public int gamesPlayed = 0;
-        public int gamesWon = 0;
-        public int gamesLost = 0;
-
-        public PlayerStats() {}
-
-        // Getter / Setter necessari per Firebase
-        public int getGamesPlayed() { return gamesPlayed; }
-        public void setGamesPlayed(int gamesPlayed) { this.gamesPlayed = gamesPlayed; }
-        public int getGamesWon() { return gamesWon; }
-        public void setGamesWon(int gamesWon) { this.gamesWon = gamesWon; }
-        public int getGamesLost() { return gamesLost; }
-        public void setGamesLost(int gamesLost) { this.gamesLost = gamesLost; }
     }
 }

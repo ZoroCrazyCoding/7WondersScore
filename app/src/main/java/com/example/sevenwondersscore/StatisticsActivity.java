@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -13,15 +14,22 @@ import com.google.firebase.database.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StatisticsActivity extends AppCompatActivity {
 
     TableLayout table;
-    DatabaseReference statsRef;
+    DatabaseReference resultsRef;
     String gameType;
     ProgressBar progressBar;
     TextView tvNoData;
+
+    // Variabili per ordinamento
+    private List<PlayerData> currentPlayersList;
+    private String currentSortColumn = "player"; // Default: ordina per nome
+    private boolean currentSortAscending = true; // Default: ordine crescente
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,114 +51,139 @@ public class StatisticsActivity extends AppCompatActivity {
 
         // Ricevi tipo di gioco passato da GameMenuActivity
         gameType = getIntent().getStringExtra("gameType");
-        if(gameType == null) gameType = "7wonders"; // fallback
+        if(gameType == null) gameType = "7wonders";
 
-        Log.d("FirebaseStats", "=== StatisticsActivity onCreate ===");
-        Log.d("FirebaseStats", "Game Type: " + gameType);
+        Log.d("StatisticsActivity", "=== StatisticsActivity onCreate ===");
+        Log.d("StatisticsActivity", "Game Type: " + gameType);
 
         table = findViewById(R.id.tableStats);
+        progressBar = findViewById(R.id.progressBar);
+        tvNoData = findViewById(R.id.tvNoData);
 
-        // Aggiungi ProgressBar e TextView per stato vuoto
-        progressBar = new ProgressBar(this);
-        tvNoData = new TextView(this);
-        tvNoData.setText("No statistics available yet.\nPlay some games to see your stats!");
-        tvNoData.setGravity(Gravity.CENTER);
-        tvNoData.setTextSize(16);
-        tvNoData.setPadding(32, 32, 32, 32);
-        tvNoData.setVisibility(android.view.View.GONE);
+        // Verifica che le view esistano
+        if(progressBar == null) {
+            Log.e("StatisticsActivity", "ProgressBar not found in layout!");
+        }
+        if(tvNoData == null) {
+            Log.e("StatisticsActivity", "tvNoData not found in layout!");
+        }
 
-        // Nodo Firebase specifico per tipo di gioco
-        // IMPORTANTE: Usa il database europeo!
+        // Riferimento Firebase ai game_results (non più statistics)
         FirebaseDatabase europeanDatabase = FirebaseDatabase.getInstance(
                 "https://sevenwondersscore-default-rtdb.europe-west1.firebasedatabase.app"
         );
 
-        statsRef = europeanDatabase
-                .getReference("statistics")
+        resultsRef = europeanDatabase
+                .getReference("game_results")
                 .child(gameType);
 
-        Log.d("FirebaseStats", "Stats Reference: " + statsRef.toString());
-        Log.d("FirebaseStats", "Loading statistics...");
+        Log.d("StatisticsActivity", "Results Reference: " + resultsRef.toString());
+        Log.d("StatisticsActivity", "Loading statistics from game results...");
 
         loadStatistics();
     }
 
     private void loadStatistics() {
-        Log.d("FirebaseStats", "loadStatistics() - Adding value event listener");
+        Log.d("StatisticsActivity", "loadStatistics() - Adding value event listener");
 
-        statsRef.addValueEventListener(new ValueEventListener() {
+        if(progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
+        if(tvNoData != null) {
+            tvNoData.setVisibility(View.GONE);
+        }
+
+        resultsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                Log.d("FirebaseStats", "=== onDataChange triggered ===");
-                Log.d("FirebaseStats", "Snapshot exists: " + snapshot.exists());
-                Log.d("FirebaseStats", "Snapshot has children: " + snapshot.hasChildren());
-                Log.d("FirebaseStats", "Children count: " + snapshot.getChildrenCount());
+                Log.d("StatisticsActivity", "=== onDataChange triggered ===");
+                Log.d("StatisticsActivity", "Snapshot exists: " + snapshot.exists());
+                Log.d("StatisticsActivity", "Snapshot has children: " + snapshot.hasChildren());
+
+                if(progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
 
                 table.removeAllViews();
 
                 if (!snapshot.exists() || !snapshot.hasChildren()) {
-                    // Nessun dato disponibile
-                    Log.w("FirebaseStats", "No data available in Firebase");
-                    tvNoData.setVisibility(android.view.View.VISIBLE);
+                    Log.w("StatisticsActivity", "No data available in Firebase");
+                    if(tvNoData != null) {
+                        tvNoData.setVisibility(View.VISIBLE);
+                    }
                     return;
                 }
 
-                tvNoData.setVisibility(android.view.View.GONE);
+                if(tvNoData != null) {
+                    tvNoData.setVisibility(View.GONE);
+                }
 
-                // Raccogli tutti i giocatori in una lista per poterli ordinare
+                // Mappa per raccogliere le statistiche di ogni giocatore
+                Map<String, PlayerStats> statsMap = new HashMap<>();
+
+                // Scorri tutti i game results e calcola le statistiche
+                for(DataSnapshot gameSnap : snapshot.getChildren()) {
+                    GameResult result = gameSnap.getValue(GameResult.class);
+                    if(result == null) continue;
+
+                    String winner = result.getWinnerName();
+
+                    // Processa ogni giocatore in questa partita
+                    List<GameResult.PlayerResult> players = result.getPlayers();
+                    if(players == null) continue;
+
+                    for(GameResult.PlayerResult player : players) {
+                        String playerName = player.getName();
+                        if(playerName == null) continue;
+
+                        // Crea o recupera le statistiche del giocatore
+                        PlayerStats stats = statsMap.get(playerName);
+                        if(stats == null) {
+                            stats = new PlayerStats();
+                            statsMap.put(playerName, stats);
+                        }
+
+                        // Incrementa partite giocate
+                        stats.gamesPlayed++;
+
+                        // Incrementa vittorie o sconfitte
+                        if(playerName.equals(winner)) {
+                            stats.gamesWon++;
+                        } else {
+                            stats.gamesLost++;
+                        }
+                    }
+                }
+
+                Log.d("StatisticsActivity", "Total unique players: " + statsMap.size());
+
+                // Converti la mappa in lista per poter ordinare
                 List<PlayerData> players = new ArrayList<>();
-
-                for(DataSnapshot playerSnap : snapshot.getChildren()){
-                    String name = playerSnap.getKey();
-                    Log.d("FirebaseStats", "Processing player: " + name);
-                    Log.d("FirebaseStats", "Player data: " + playerSnap.getValue());
-
-                    NewGameActivity.PlayerStats stats =
-                            playerSnap.getValue(NewGameActivity.PlayerStats.class);
-                    if(stats != null) {
-                        Log.d("FirebaseStats", name + " stats - Played: " + stats.gamesPlayed +
-                                ", Won: " + stats.gamesWon + ", Lost: " + stats.gamesLost);
-                        players.add(new PlayerData(name, stats));
-                    } else {
-                        Log.w("FirebaseStats", "Failed to parse stats for: " + name);
-                    }
+                for(Map.Entry<String, PlayerStats> entry : statsMap.entrySet()) {
+                    players.add(new PlayerData(entry.getKey(), entry.getValue()));
                 }
 
-                Log.d("FirebaseStats", "Total players loaded: " + players.size());
+                // Salva la lista corrente
+                currentPlayersList = players;
 
-                // Ordina per numero di vittorie (decrescente)
-                Collections.sort(players, new Comparator<PlayerData>() {
-                    @Override
-                    public int compare(PlayerData p1, PlayerData p2) {
-                        // Prima per vittorie (decrescente)
-                        int winCompare = Integer.compare(p2.stats.gamesWon, p1.stats.gamesWon);
-                        if (winCompare != 0) return winCompare;
+                // Ordina con i criteri di default (per nome, crescente)
+                sortPlayersList("player", true);
 
-                        // Poi per partite giocate (decrescente)
-                        int playedCompare = Integer.compare(p2.stats.gamesPlayed, p1.stats.gamesPlayed);
-                        if (playedCompare != 0) return playedCompare;
+                // Mostra i dati
+                refreshTable();
 
-                        // Infine alfabeticamente
-                        return p1.name.compareTo(p2.name);
-                    }
-                });
-
-                addHeader();
-
-                // Aggiungi le righe ordinate
-                for(PlayerData player : players) {
-                    addRow(player.name, player.stats);
-                }
-
-                Log.d("FirebaseStats", "Statistics table updated successfully");
+                Log.d("StatisticsActivity", "Statistics table updated successfully");
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Log.e("FirebaseStats", "❌ Error loading statistics", error.toException());
-                Log.e("FirebaseStats", "Error code: " + error.getCode());
-                Log.e("FirebaseStats", "Error message: " + error.getMessage());
-                Log.e("FirebaseStats", "Error details: " + error.getDetails());
+                if(progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
+
+                Log.e("StatisticsActivity", "❌ Error loading statistics", error.toException());
+                Log.e("StatisticsActivity", "Error code: " + error.getCode());
+                Log.e("StatisticsActivity", "Error message: " + error.getMessage());
 
                 Toast.makeText(StatisticsActivity.this,
                         "Error loading statistics: " + error.getMessage(),
@@ -159,27 +192,99 @@ public class StatisticsActivity extends AppCompatActivity {
         });
     }
 
+    private void sortPlayersList(String column, boolean ascending) {
+        currentSortColumn = column;
+        currentSortAscending = ascending;
+
+        Collections.sort(currentPlayersList, new Comparator<PlayerData>() {
+            @Override
+            public int compare(PlayerData p1, PlayerData p2) {
+                int result = 0;
+
+                switch(column) {
+                    case "player":
+                        result = p1.name.compareToIgnoreCase(p2.name);
+                        break;
+                    case "played":
+                        result = Integer.compare(p1.stats.gamesPlayed, p2.stats.gamesPlayed);
+                        break;
+                    case "won":
+                        result = Integer.compare(p1.stats.gamesWon, p2.stats.gamesWon);
+                        break;
+                    case "lost":
+                        result = Integer.compare(p1.stats.gamesLost, p2.stats.gamesLost);
+                        break;
+                    case "winpercent":
+                        double p1Percent = p1.stats.gamesPlayed > 0 ?
+                                (p1.stats.gamesWon * 100.0) / p1.stats.gamesPlayed : 0;
+                        double p2Percent = p2.stats.gamesPlayed > 0 ?
+                                (p2.stats.gamesWon * 100.0) / p2.stats.gamesPlayed : 0;
+                        result = Double.compare(p1Percent, p2Percent);
+                        break;
+                }
+
+                // Se decrescente, inverti il risultato
+                return ascending ? result : -result;
+            }
+        });
+    }
+
+    private void refreshTable() {
+        table.removeAllViews();
+        addHeader();
+
+        for(PlayerData player : currentPlayersList) {
+            addRow(player.name, player.stats);
+        }
+    }
+
     private void addHeader() {
         TableRow header = new TableRow(this);
         header.setGravity(Gravity.CENTER);
-        header.setBackgroundColor(Color.parseColor("#E0E0E0"));
+        header.setBackgroundColor(Color.parseColor("#2C2C2C"));
         header.setPadding(0, 16, 0, 16);
 
         String[] headers = {"Player", "Played", "Won", "Lost", "Win %"};
-        for(String h : headers){
+        String[] columns = {"player", "played", "won", "lost", "winpercent"};
+
+        for(int i = 0; i < headers.length; i++) {
+            final String columnName = columns[i];
+
             TextView tv = new TextView(this);
-            tv.setText(h);
+
+            // Aggiungi freccia se questa colonna è quella ordinata
+            String headerText = headers[i];
+            if(currentSortColumn.equals(columnName)) {
+                headerText += currentSortAscending ? " ▲" : " ▼";
+            }
+
+            tv.setText(headerText);
             tv.setPadding(24,16,24,16);
             tv.setTypeface(null, android.graphics.Typeface.BOLD);
             tv.setGravity(Gravity.CENTER);
             tv.setTextSize(16);
+            tv.setTextColor(Color.parseColor("#FFD700"));
+
+            // Rendi cliccabile
+            tv.setClickable(true);
+            tv.setOnClickListener(v -> {
+                // Se è già ordinato per questa colonna, inverti l'ordine
+                if(currentSortColumn.equals(columnName)) {
+                    sortPlayersList(columnName, !currentSortAscending);
+                } else {
+                    // Altrimenti ordina per questa colonna in ordine crescente
+                    sortPlayersList(columnName, true);
+                }
+                refreshTable();
+            });
+
             header.addView(tv);
         }
 
         table.addView(header);
     }
 
-    private void addRow(String name, NewGameActivity.PlayerStats stats){
+    private void addRow(String name, PlayerStats stats){
         TableRow row = new TableRow(this);
         row.setGravity(Gravity.CENTER);
         row.setPadding(0, 8, 0, 8);
@@ -200,10 +305,10 @@ public class StatisticsActivity extends AppCompatActivity {
         table.addView(row);
 
         // Aggiungi separatore visuale
-        android.view.View divider = new android.view.View(this);
+        View divider = new View(this);
         divider.setLayoutParams(new TableLayout.LayoutParams(
                 TableLayout.LayoutParams.MATCH_PARENT, 1));
-        divider.setBackgroundColor(Color.parseColor("#CCCCCC"));
+        divider.setBackgroundColor(Color.parseColor("#404040"));
         table.addView(divider);
     }
 
@@ -216,18 +321,27 @@ public class StatisticsActivity extends AppCompatActivity {
 
         if (isName) {
             tv.setTypeface(null, android.graphics.Typeface.BOLD);
-            tv.setTextColor(Color.parseColor("#1976D2"));
+            tv.setTextColor(Color.parseColor("#64B5F6"));
+        } else {
+            tv.setTextColor(Color.parseColor("#FFFFFF"));
         }
 
         return tv;
     }
 
+    // Classe per statistiche giocatore
+    private static class PlayerStats {
+        int gamesPlayed = 0;
+        int gamesWon = 0;
+        int gamesLost = 0;
+    }
+
     // Classe helper per ordinamento
     private static class PlayerData {
         String name;
-        NewGameActivity.PlayerStats stats;
+        PlayerStats stats;
 
-        PlayerData(String name, NewGameActivity.PlayerStats stats) {
+        PlayerData(String name, PlayerStats stats) {
             this.name = name;
             this.stats = stats;
         }

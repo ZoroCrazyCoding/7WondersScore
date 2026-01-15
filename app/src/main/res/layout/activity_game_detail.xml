@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:fitsSystemWindows="true">
+    android:fitsSystemWindows="true"
+    android:background="#121212">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="?attr/actionBarSize"
         android:background="#000000"
-        android:minHeight="?attr/actionBarSize"
-        app:title="7 Wonders Score"
-        app:titleTextColor="#DAA520" />
+        android:elevation="4dp" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -21,6 +19,7 @@
         android:layout_weight="1">
 
         <LinearLayout
+            android:id="@+id/layoutMain"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -30,10 +29,10 @@
                 android:id="@+id/tvGameInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#F5F5F5"
+                android:background="#2C2C2C"
                 android:padding="16dp"
                 android:textSize="16sp"
-                android:textColor="@android:color/black"
+                android:textColor="#FFFFFF"
                 android:layout_marginBottom="16dp" />
 
             <HorizontalScrollView
@@ -47,6 +46,29 @@
                     android:stretchColumns="*" />
 
             </HorizontalScrollView>
+
+            <!-- Container per il bottone Delete -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_marginTop="32dp">
+
+                <Button
+                    android:id="@+id/btnDeleteGame"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Delete this game"
+                    android:backgroundTint="#FF6B6B"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:paddingStart="40dp"
+                    android:paddingEnd="40dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

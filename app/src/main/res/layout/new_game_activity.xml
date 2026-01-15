@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingTop="?attr/actionBarSize"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="#121212">
 
     <LinearLayout
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -21,7 +22,7 @@
             android:background="#000000"
             android:minHeight="?attr/actionBarSize"
             app:title="7 Wonders Score"
-            app:titleTextColor="#DAA520" />
+            app:titleTextColor="#FFD700" />
 
         <!-- Input numero giocatori (solo 7 Wonders) -->
         <LinearLayout
@@ -29,13 +30,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:layout_marginTop="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Numero di giocatori (3-7):"
+                android:text="Number of players (3-7):"
                 android:textSize="16sp"
+                android:textColor="#FFFFFF"
                 android:layout_marginEnd="8dp"/>
 
             <EditText
@@ -43,7 +46,10 @@
                 android:layout_width="60dp"
                 android:layout_height="wrap_content"
                 android:inputType="number"
-                android:hint="3-7"/>
+                android:hint="3-7"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#808080"
+                android:backgroundTint="#FFD700"/>
         </LinearLayout>
 
         <Button
@@ -52,14 +58,17 @@
             android:layout_height="wrap_content"
             android:text="Confirm"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="12dp"/>
+            android:layout_marginTop="12dp"
+            android:backgroundTint="#FFD700"
+            android:textColor="#000000"/>
 
         <!-- Tabella unica -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fillViewport="true"
-            android:scrollbars="horizontal">
+            android:scrollbars="horizontal"
+            android:layout_marginTop="16dp">
 
             <TableLayout
                 android:id="@+id/tableMain"

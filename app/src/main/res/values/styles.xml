@@ -1,11 +1,36 @@
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Base application theme with DARK MODE -->
     <style name="Theme.SevenWondersScore" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Personalizzazioni colore -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryDark">@color/purple_700</item>
-        <item name="colorAccent">@color/teal_200</item>
+        <!-- Colori per tema scuro -->
+        <item name="colorPrimary">#1E1E1E</item>
+        <item name="colorPrimaryDark">#000000</item>
+        <item name="colorAccent">#FFD700</item>
+
+        <!-- Sfondo scuro -->
+        <item name="android:windowBackground">@color/dark_background</item>
+        <item name="android:colorBackground">@color/dark_background</item>
+
+        <!-- Testo chiaro -->
+        <item name="android:textColor">@color/light_text</item>
+        <item name="android:textColorPrimary">@color/light_text</item>
+        <item name="android:textColorSecondary">@color/light_text_secondary</item>
+
+        <!-- Dialog con tema scuro -->
+        <item name="alertDialogTheme">@style/DarkAlertDialog</item>
+    </style>
+
+    <!-- Dark AlertDialog Theme -->
+    <style name="DarkAlertDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:background">#2C2C2C</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="buttonBarNegativeButtonStyle">@style/DarkDialogButton</item>
+        <item name="buttonBarPositiveButtonStyle">@style/DarkDialogButton</item>
+    </style>
+
+    <style name="DarkDialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">#FFD700</item>
     </style>
 
 </resources>
