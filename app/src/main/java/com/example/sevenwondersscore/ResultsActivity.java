@@ -237,12 +237,13 @@ public class ResultsActivity extends AppCompatActivity {
             String typeText = "";
             if(result.getVictoryType().equals("military")) {
                 typeText = "⚔️ Military Supremacy";
+                tvVictoryType.setTextColor(Color.parseColor("#FF6B6B"));
             } else if(result.getVictoryType().equals("scientific")) {
                 typeText = "🔬 Scientific Supremacy";
+                tvVictoryType.setTextColor(Color.parseColor("#008F39"));
             }
             tvVictoryType.setText(typeText);
             tvVictoryType.setTextSize(14);
-            tvVictoryType.setTextColor(Color.parseColor("#FF6B6B"));
             tvVictoryType.setPadding(0, 4, 0, 0);
             card.addView(tvVictoryType);
         }
