@@ -155,7 +155,8 @@ public class NewGameActivity extends AppCompatActivity {
             headerRow.addView(etName);
         }
 
-        if(!isDuel && numPlayers>4){
+        // Aggiungi colonna Category a destra per 7 Wonders (NON per Duel)
+        if(!isDuel){
             TextView tvHeaderSymbolEnd = new TextView(this);
             tvHeaderSymbolEnd.setText("Category");
             tvHeaderSymbolEnd.setGravity(Gravity.CENTER);
@@ -260,11 +261,16 @@ public class NewGameActivity extends AppCompatActivity {
             totalRow.addView(tvTotal);
         }
 
-        if(!isDuel && numPlayers>4){
-            TextView tvPlaceholder = new TextView(this);
-            tvPlaceholder.setText(" ");
-            tvPlaceholder.setPadding(16, 8, 16, 8);
-            totalRow.addView(tvPlaceholder);
+        // Aggiungi simbolo sommatoria a destra per 7 Wonders (NON per Duel)
+        if(!isDuel){
+            TextView tvSumEnd = new TextView(this);
+            tvSumEnd.setText("∑");
+            tvSumEnd.setTextSize(22);
+            tvSumEnd.setTypeface(null, android.graphics.Typeface.BOLD);
+            tvSumEnd.setGravity(Gravity.CENTER);
+            tvSumEnd.setPadding(16, 8, 16, 8);
+            tvSumEnd.setTextColor(Color.parseColor("#FFD700"));
+            totalRow.addView(tvSumEnd);
         }
 
         tableMain.addView(totalRow);

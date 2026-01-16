@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -99,35 +100,192 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     private void showFirstConfirmationDialog() {
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Delete All Data")
                 .setMessage("Do you want to delete all data in game results?")
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    // Mostra secondo dialog di conferma
-                    showSecondConfirmationDialog();
-                })
-                .setNegativeButton("No", (dialog, which) -> {
-                    // Chiudi semplicemente il dialog
-                    dialog.dismiss();
+                .setPositiveButton("Yes", null) // Gestito manualmente
+                .setNegativeButton("No", (dialogInterface, which) -> {
+                    dialogInterface.dismiss();
                 })
                 .setCancelable(true)
-                .show();
+                .create();
+
+        // Personalizza i colori del dialog
+        dialog.setOnShowListener(dialogInterface -> {
+            // Colora il titolo
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) {
+                titleView.setTextColor(Color.parseColor("#FFD700"));
+            }
+
+            // Colora il messaggio
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setTextColor(Color.parseColor("#FFFFFF"));
+            }
+
+            // Colora i pulsanti
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            android.widget.Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+
+            if (positiveButton != null) {
+                positiveButton.setTextColor(Color.parseColor("#FFD700"));
+                positiveButton.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    showSecondConfirmationDialog();
+                });
+            }
+            if (negativeButton != null) {
+                negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
+            }
+        });
+
+        dialog.show();
     }
 
     private void showSecondConfirmationDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Are You Sure?")
-                .setMessage("This action cannot be undone. All game results will be permanently deleted.")
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    // Elimina tutti i dati
-                    deleteAllGameResults();
-                })
-                .setNegativeButton("No", (dialog, which) -> {
-                    // Chiudi semplicemente il dialog
-                    dialog.dismiss();
+        // Crea un layout verticale per contenere EditText e CheckBox
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 20, 50, 20);
+
+        // Crea un EditText per inserire la password
+        final EditText input = new EditText(this);
+        input.setHint("Enter password");
+        input.setHintTextColor(Color.parseColor("#888888"));
+        input.setTextColor(Color.parseColor("#FFFFFF"));
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+        // Imposta una larghezza massima per l'EditText
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        inputParams.setMargins(20, 10, 20, 10);
+        input.setLayoutParams(inputParams);
+
+        // Crea una CheckBox per mostrare/nascondere la password
+        CheckBox checkBox = new CheckBox(this);
+        checkBox.setText("Show password");
+        checkBox.setTextColor(Color.parseColor("#B0B0B0"));
+        checkBox.setButtonTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#FFD700")));
+
+        LinearLayout.LayoutParams checkBoxParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        checkBoxParams.setMargins(20, 5, 20, 10);
+        checkBoxParams.gravity = Gravity.CENTER;
+        checkBox.setLayoutParams(checkBoxParams);
+
+        // Listener per mostrare/nascondere la password
+        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                // Mostra la password
+                input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            } else {
+                // Nascondi la password
+                input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            }
+            // Sposta il cursore alla fine del testo
+            input.setSelection(input.getText().length());
+        });
+
+        // Aggiungi EditText e CheckBox al layout
+        layout.addView(input);
+        layout.addView(checkBox);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Enter Password")
+                .setMessage("Enter the password to confirm deletion:")
+                .setView(layout)
+                .setPositiveButton("Confirm", null) // Lo impostiamo a null per gestirlo manualmente
+                .setNegativeButton("Cancel", (dialogInterface, which) -> {
+                    dialogInterface.dismiss();
                 })
                 .setCancelable(true)
-                .show();
+                .create();
+
+        // Personalizza i colori del dialog
+        dialog.setOnShowListener(dialogInterface -> {
+            // Colora il titolo
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) {
+                titleView.setTextColor(Color.parseColor("#FFD700"));
+            }
+
+            // Colora il messaggio
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setTextColor(Color.parseColor("#FFFFFF"));
+            }
+
+            // Colora i pulsanti
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            android.widget.Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+
+            if (positiveButton != null) {
+                positiveButton.setTextColor(Color.parseColor("#FFD700"));
+            }
+            if (negativeButton != null) {
+                negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
+            }
+
+            // Gestisci il click del pulsante Confirm manualmente
+            if (positiveButton != null) {
+                positiveButton.setOnClickListener(v -> {
+                    String enteredPassword = input.getText().toString();
+
+                    if(enteredPassword.equals("Zoro5212!")) {
+                        // Password corretta - elimina i dati
+                        dialog.dismiss();
+                        deleteAllGameResults();
+                    } else {
+                        // Password errata - mostra messaggio
+                        dialog.dismiss();
+                        showWrongPasswordDialog();
+                    }
+                });
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void showWrongPasswordDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Wrong Password")
+                .setMessage("The password you entered is incorrect.")
+                .setPositiveButton("OK", (dialogInterface, which) -> {
+                    dialogInterface.dismiss();
+                    // Torna all'inserimento della password
+                    showSecondConfirmationDialog();
+                })
+                .setCancelable(false)
+                .create();
+
+        // Personalizza i colori del dialog
+        dialog.setOnShowListener(dialogInterface -> {
+            // Colora il titolo in rosso
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) {
+                titleView.setTextColor(Color.parseColor("#FFD700"));
+            }
+
+            // Colora il messaggio
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setTextColor(Color.parseColor("#FFFFFF"));
+            }
+
+            // Colora il pulsante OK
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (positiveButton != null) {
+                positiveButton.setTextColor(Color.parseColor("#FFD700"));
+            }
+        });
+
+        dialog.show();
     }
 
     private void deleteAllGameResults() {
@@ -138,10 +296,9 @@ public class ResultsActivity extends AppCompatActivity {
 
             if(task.isSuccessful()) {
                 Log.d("ResultsActivity", "All game results deleted successfully");
-                Toast.makeText(this, "All game results deleted", Toast.LENGTH_SHORT).show();
 
-                // Ricarica la lista (che sarà vuota)
-                loadResults();
+                // Mostra dialog di conferma eliminazione e torna al menu
+                showDataDeletedDialog();
             } else {
                 Log.e("ResultsActivity", "Error deleting game results", task.getException());
                 Toast.makeText(this, "Error deleting data: " +
@@ -149,6 +306,42 @@ public class ResultsActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void showDataDeletedDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Success")
+                .setMessage("All data has been deleted")
+                .setPositiveButton("OK", (dialogInterface, which) -> {
+                    dialogInterface.dismiss();
+                    // Torna al GameMenuActivity
+                    finish();
+                })
+                .setCancelable(false)
+                .create();
+
+        // Personalizza i colori del dialog
+        dialog.setOnShowListener(dialogInterface -> {
+            // Colora il titolo in verde
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) {
+                titleView.setTextColor(Color.parseColor("#FFD700"));
+            }
+
+            // Colora il messaggio
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setTextColor(Color.parseColor("#FFFFFF"));
+            }
+
+            // Colora il pulsante OK
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (positiveButton != null) {
+                positiveButton.setTextColor(Color.parseColor("#FFD700"));
+            }
+        });
+
+        dialog.show();
     }
 
     private void loadResults() {
