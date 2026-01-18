@@ -41,6 +41,8 @@ public class GameResult implements Serializable {
     public String getWinnerName() { return winnerName; }
     public void setWinnerName(String winnerName) { this.winnerName = winnerName; }
 
+
+
     public String getVictoryType() { return victoryType; }
     public void setVictoryType(String victoryType) { this.victoryType = victoryType; }
 
@@ -49,6 +51,14 @@ public class GameResult implements Serializable {
 
     public List<PlayerResult> getPlayers() { return players; }
     public void setPlayers(List<PlayerResult> players) { this.players = players; }
+
+    // Metodo helper per verificare se un giocatore è vincitore (anche in caso di parità)
+    public boolean isWinner(String playerName) {
+        if (winnerName == null || playerName == null) return false;
+        // Controlla se il nome è contenuto in winnerName (può essere "Alice" o "Alice & Bob")
+        return winnerName.equals(playerName) || winnerName.contains(playerName + " &") || 
+               winnerName.contains("& " + playerName) || winnerName.contains(", " + playerName);
+    }
 
     public static class PlayerResult implements Serializable {
         public String name;

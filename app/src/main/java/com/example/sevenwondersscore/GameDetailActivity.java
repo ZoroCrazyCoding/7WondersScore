@@ -79,7 +79,12 @@ public class GameDetailActivity extends AppCompatActivity {
         // Info partita
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         String infoText = "Date: " + sdf.format(new Date(result.getTimestamp())) + "\n";
-        infoText += "Winner: " + result.getWinnerName() + "\n";
+        // Se winnerName contiene "&" o "," significa che ci sono più vincitori
+        if(result.getWinnerName() != null && (result.getWinnerName().contains(" & ") || result.getWinnerName().contains(", "))) {
+            infoText += "Winners: " + result.getWinnerName() + "\n";
+        } else {
+            infoText += "Winner: " + result.getWinnerName() + "\n";
+        }
 
         // Victory Type - SOLO per Duel (in 7 Wonders è sempre Points quindi non mostrarlo)
         if(isDuel) {
@@ -126,8 +131,8 @@ public class GameDetailActivity extends AppCompatActivity {
             tvName.setTypeface(null, android.graphics.Typeface.BOLD);
             tvName.setTextSize(14);
 
-            // Evidenzia il vincitore in oro
-            if(player.getName().equals(result.getWinnerName())) {
+            // Evidenzia i vincitori in oro
+            if(result.isWinner(player.getName())) {
                 tvName.setTextColor(Color.parseColor("#FFD700"));
             } else {
                 tvName.setTextColor(Color.parseColor("#FFFFFF"));
@@ -198,8 +203,8 @@ public class GameDetailActivity extends AppCompatActivity {
             tvTotal.setTypeface(null, android.graphics.Typeface.BOLD);
             tvTotal.setTextSize(18);
 
-            // Evidenzia il vincitore in oro
-            if(player.getName().equals(result.getWinnerName())) {
+            // Evidenzia i vincitori in oro
+            if(result.isWinner(player.getName())) {
                 tvTotal.setTextColor(Color.parseColor("#FFD700"));
             } else {
                 tvTotal.setTextColor(Color.parseColor("#FFFFFF"));

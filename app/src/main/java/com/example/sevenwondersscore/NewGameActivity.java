@@ -421,25 +421,37 @@ public class NewGameActivity extends AppCompatActivity {
         }
 
         // Determina vincitore per punteggio se non c'è supremazia
+        List<String> winners = new ArrayList<>();
         if (winnerColumn == -1) {
+            // Prima trova il punteggio massimo
+            for (int j = 0; j < numPlayers; j++) {
+                TextView tvTotal = findViewById(1000 + j);
+                int total = Integer.parseInt(tvTotal.getText().toString());
+                if (total > maxScore) {
+                    maxScore = total;
+                }
+            }
+            
+            // Poi trova tutti i giocatori con punteggio massimo
             for (int j = 0; j < numPlayers; j++) {
                 TextView tvTotal = findViewById(1000 + j);
                 int total = Integer.parseInt(tvTotal.getText().toString());
                 EditText etName = (EditText) headerRow.getChildAt(j + 1);
                 String name = etName.getText().toString().trim();
-
-                if (isDuel && j == winnerColumn) {
-                    winner = name;
-                    Log.d("FirebaseResults", "Duel winner: " + winner);
-                } else if (total > maxScore) {
-                    maxScore = total;
-                    winner = name;
-                    Log.d("FirebaseResults", "New high score: " + winner + " with " + maxScore);
+                
+                if (total == maxScore) {
+                    winners.add(name);
+                    Log.d("FirebaseResults", "Winner: " + name + " with " + maxScore);
                 }
             }
+            winner = winners.get(0); // Per compatibilità
+        } else {
+            // Supremazia: un solo vincitore
+            winners.add(winner);
         }
 
-        Log.d("FirebaseResults", "Final winner: " + winner);
+        Log.d("FirebaseResults", "Total winners: " + winners.size());
+
 
         String message;
         String victoryType = "points";
@@ -448,10 +460,27 @@ public class NewGameActivity extends AppCompatActivity {
             victoryType = (winnerCheckIndex == 0) ? "military" : "scientific";
             message = "The winner is: " + winner + " (" + type + ")";
         } else {
-            message = "The winner is: " + winner;
+            if (winners.size() == 1) {
+                message = "The winner is: " + winners.get(0);
+            } else {
+                // Più vincitori
+                StringBuilder sb = new StringBuilder("The winners are: ");
+                for (int i = 0; i < winners.size(); i++) {
+                    if (i > 0) {
+                        if (i == winners.size() - 1) {
+                            sb.append(" & ");
+                        } else {
+                            sb.append(", ");
+                        }
+                    }
+                    sb.append(winners.get(i));
+                }
+                message = sb.toString();
+            }
         }
 
         String finalWinner = winner;
+        List<String> finalWinners = new ArrayList<>(winners);
         String finalVictoryType = victoryType;
 
         // Checkbox "Save results" (checked di default)
@@ -475,7 +504,7 @@ public class NewGameActivity extends AppCompatActivity {
                     Log.d("FirebaseResults", "Save results checkbox is checked: " + cbSaveResults.isChecked());
                     if (cbSaveResults.isChecked()) {
                         Log.d("FirebaseResults", "Saving game result...");
-                        saveGameResultToFirebase(headerRow, finalWinner, finalVictoryType);
+                        saveGameResultToFirebase(headerRow, finalWinners, finalVictoryType);
                     } else {
                         Log.d("FirebaseResults", "Results NOT saved (checkbox unchecked)");
                     }
@@ -500,14 +529,35 @@ public class NewGameActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void saveGameResultToFirebase(TableRow headerRow, String winner, String victoryType) {
+    private void saveGameResultToFirebase(TableRow headerRow, List<String> winners, String victoryType) {
         Log.d("FirebaseResults", "=== START SAVING GAME RESULT ===");
 
         // Crea l'oggetto GameResult
         String gameId = resultsRef.push().getKey();
         long timestamp = System.currentTimeMillis();
 
-        GameResult gameResult = new GameResult(gameId, timestamp, gameType, winner, victoryType, numPlayers);
+
+
+        // Crea il winnerName: singolo nome o "Name1 & Name2" in caso di parità
+        String winnerName;
+        if (winners.size() == 1) {
+            winnerName = winners.get(0);
+        } else {
+            // Più vincitori: formatta come "Name1 & Name2" o "Name1, Name2 & Name3"
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < winners.size(); i++) {
+                if (i > 0) {
+                    if (i == winners.size() - 1) {
+                        sb.append(" & ");
+                    } else {
+                        sb.append(", ");
+                    }
+                }
+                sb.append(winners.get(i));
+            }
+            winnerName = sb.toString();
+        }
+        GameResult gameResult = new GameResult(gameId, timestamp, gameType, winnerName, victoryType, numPlayers);
 
         // Aggiungi i dati di ogni giocatore
         for (int j = 0; j < numPlayers; j++) {

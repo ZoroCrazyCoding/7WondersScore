@@ -126,8 +126,6 @@ public class StatisticsActivity extends AppCompatActivity {
                     GameResult result = gameSnap.getValue(GameResult.class);
                     if(result == null) continue;
 
-                    String winner = result.getWinnerName();
-
                     // Processa ogni giocatore in questa partita
                     List<GameResult.PlayerResult> players = result.getPlayers();
                     if(players == null) continue;
@@ -146,8 +144,11 @@ public class StatisticsActivity extends AppCompatActivity {
                         // Incrementa partite giocate
                         stats.gamesPlayed++;
 
+                        // Verifica se questo giocatore è vincitore (anche in caso di parità)
+                        boolean isWinner = result.isWinner(playerName);
+
                         // Incrementa vittorie o sconfitte
-                        if(playerName.equals(winner)) {
+                        if(isWinner) {
                             stats.gamesWon++;
                         } else {
                             stats.gamesLost++;

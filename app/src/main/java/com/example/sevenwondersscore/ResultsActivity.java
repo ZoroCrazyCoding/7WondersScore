@@ -416,7 +416,13 @@ public class ResultsActivity extends AppCompatActivity {
 
         // Winner - testo oro
         TextView tvWinner = new TextView(this);
-        String winnerText = "🏆 Winner: " + result.getWinnerName();
+        String winnerText;
+        // Se winnerName contiene "&" o "," significa che ci sono più vincitori
+        if(result.getWinnerName() != null && (result.getWinnerName().contains(" & ") || result.getWinnerName().contains(", "))) {
+            winnerText = "🏆 Winners: " + result.getWinnerName();
+        } else {
+            winnerText = "🏆 Winner: " + result.getWinnerName();
+        }
         tvWinner.setText(winnerText);
         tvWinner.setTextSize(18);
         tvWinner.setTextColor(Color.parseColor("#FFD700"));
