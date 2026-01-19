@@ -358,7 +358,7 @@ public class NewGameActivity extends AppCompatActivity {
         for (int j = 0; j < numPlayers; j++) {
             EditText etName = (EditText) headerRow.getChildAt(j + 1);
             if (etName.getText().toString().trim().isEmpty()) {
-                showErrorDialog("Error: missing data\n\nPlease enter all player names.");
+                showErrorDialog("Please enter all player names.");
                 return;
             }
         }
@@ -368,7 +368,7 @@ public class NewGameActivity extends AppCompatActivity {
             for (int i = 0; i < scoreCells.length; i++) {
                 for (int j = 0; j < numPlayers; j++) {
                     if (scoreCells[i][j].getText().toString().trim().isEmpty()) {
-                        showErrorDialog("Error: missing data\n\nPlease fill in all score fields.");
+                        showErrorDialog("Please fill in all score fields.");
                         return;
                     }
                 }
@@ -495,7 +495,7 @@ public class NewGameActivity extends AppCompatActivity {
         dialogLayout.setPadding(50, 20, 50, 10);
         dialogLayout.addView(cbSaveResults);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog =new AlertDialog.Builder(this)
                 .setTitle("Game finished")
                 .setMessage(message)
                 .setView(dialogLayout)
@@ -515,18 +515,69 @@ public class NewGameActivity extends AppCompatActivity {
                     d.dismiss(); // Chiude solo il dialog, NON chiama finish()
                 })
                 .setCancelable(false)
-                .show();
+                .create();
+
+        // Personalizza i colori del dialog
+        dialog.setOnShowListener(dialogInterface -> {
+            // Colora il titolo
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) {
+                titleView.setTextColor(Color.parseColor("#FFD700"));
+            }
+
+            // Colora il messaggio
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setTextColor(Color.parseColor("#FFFFFF"));
+            }
+
+            // Colora i pulsanti
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            android.widget.Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+
+            if (positiveButton != null) {
+                positiveButton.setTextColor(Color.parseColor("#FFD700"));
+            }
+            if (negativeButton != null) {
+                negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
+            }
+        });
+
+        dialog.show();
 
         Log.d("FirebaseResults", "Dialog shown to user");
     }
 
     private void showErrorDialog(String message) {
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Error")
                 .setMessage(message)
                 .setPositiveButton("OK", (d, w) -> d.dismiss())
                 .setCancelable(true)
-                .show();
+                .create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            // Colora il titolo
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) {
+                titleView.setTextColor(Color.parseColor("#FFD700"));
+            }
+
+            // Colora il messaggio
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setTextColor(Color.parseColor("#FFFFFF"));
+            }
+
+            // Colora i pulsanti
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+
+            if (positiveButton != null) {
+                positiveButton.setTextColor(Color.parseColor("#FFD700"));
+            }
+        });
+
+        dialog.show();
     }
 
     private void saveGameResultToFirebase(TableRow headerRow, List<String> winners, String victoryType) {

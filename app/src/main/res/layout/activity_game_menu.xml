@@ -14,7 +14,6 @@
         android:layout_height="wrap_content"
         android:background="#000000"
         android:minHeight="?attr/actionBarSize"
-        app:title="7 Wonders Score"
         app:titleTextColor="#FFD700" />
 
     <Space

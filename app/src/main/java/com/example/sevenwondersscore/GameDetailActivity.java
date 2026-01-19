@@ -39,7 +39,6 @@ public class GameDetailActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if(getSupportActionBar() != null){
-            getSupportActionBar().setTitle("Game Score");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
@@ -280,17 +279,45 @@ public class GameDetailActivity extends AppCompatActivity {
     }
 
     private void showDeleteConfirmation() {
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Delete Game")
                 .setMessage("Are you sure you want to delete this game? This action cannot be undone.")
-                .setPositiveButton("Yes", (dialog, which) -> {
+                .setPositiveButton("Yes", (dialogInterface, which) -> {
                     deleteGame();
                 })
-                .setNegativeButton("No", (dialog, which) -> {
-                    dialog.dismiss();
+                .setNegativeButton("No", (dialogInterface, which) -> {
+                    dialogInterface.dismiss();
                 })
                 .setCancelable(true)
-                .show();
+                .create();
+
+        // Personalizza i colori del dialog
+        dialog.setOnShowListener(dialogInterface -> {
+            // Colora il titolo
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) {
+                titleView.setTextColor(Color.parseColor("#FFD700"));
+            }
+
+            // Colora il messaggio
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setTextColor(Color.parseColor("#FFFFFF"));
+            }
+
+            // Colora i pulsanti
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            android.widget.Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+
+            if (positiveButton != null) {
+                positiveButton.setTextColor(Color.parseColor("#FFD700"));
+            }
+            if (negativeButton != null) {
+                negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
+            }
+        });
+
+        dialog.show();
     }
 
     private void deleteGame() {
