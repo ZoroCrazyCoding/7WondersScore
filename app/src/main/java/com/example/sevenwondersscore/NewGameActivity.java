@@ -509,15 +509,33 @@ public class NewGameActivity extends AppCompatActivity {
         dialogLayout.setPadding(50, 20, 50, 10);
         dialogLayout.addView(cbSaveResults);
 
+        // Raccogli i nomi attuali per il rematch
+        String[] currentNames = new String[numPlayers];
+        for (int j = 0; j < numPlayers; j++) {
+            EditText etName = (EditText) headerRow.getChildAt(j + 1);
+            currentNames[j] = etName.getText().toString().trim();
+        }
+
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Game finished")
                 .setMessage(message)
                 .setView(dialogLayout)
-                .setPositiveButton("OK", (d, w) -> {
+                .setPositiveButton("Done", (d, w) -> {
                     if (cbSaveResults.isChecked()) {
                         saveGameResultToFirebase(headerRow, finalWinners, finalVictoryType);
                     }
                     finish();
+                })
+                .setNeutralButton("Rematch", (d, w) -> {
+                    if (cbSaveResults.isChecked()) {
+                        saveGameResultToFirebase(headerRow, finalWinners, finalVictoryType);
+                    }
+                    createTable();
+                    TableRow newHeaderRow = (TableRow) tableMain.getChildAt(0);
+                    for (int j = 0; j < numPlayers; j++) {
+                        EditText etName = (EditText) newHeaderRow.getChildAt(j + 1);
+                        etName.setText(currentNames[j]);
+                    }
                 })
                 .setNegativeButton("Cancel", (d, w) -> d.dismiss())
                 .setCancelable(false)
@@ -531,9 +549,11 @@ public class NewGameActivity extends AppCompatActivity {
             if (messageView != null) messageView.setTextColor(Color.parseColor("#FFFFFF"));
 
             android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            android.widget.Button neutralButton = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
             android.widget.Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
 
             if (positiveButton != null) positiveButton.setTextColor(Color.parseColor("#FFD700"));
+            if (neutralButton != null) neutralButton.setTextColor(Color.parseColor("#FFD700"));
             if (negativeButton != null) negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
         });
 
