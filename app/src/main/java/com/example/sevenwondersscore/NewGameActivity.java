@@ -58,8 +58,6 @@ public class NewGameActivity extends AppCompatActivity {
         Log.d("FirebaseResults", "Game Type received: " + gameType);
         Log.d("FirebaseResults", "Is Duel: " + isDuel);
 
-        // Riferimento Firebase per questo tipo di gioco
-        // IMPORTANTE: Usa il database europeo!
         FirebaseDatabase europeanDatabase = FirebaseDatabase.getInstance(
                 "https://sevenwondersscore-default-rtdb.europe-west1.firebasedatabase.app"
         );
@@ -121,7 +119,7 @@ public class NewGameActivity extends AppCompatActivity {
         int rows = symbols.length;
         scoreCells = new EditText[rows][numPlayers];
 
-        // Header con sfondo grigio scuro come GameDetailActivity
+        // Header
         TableRow headerRow = new TableRow(this);
         headerRow.setBackgroundColor(Color.parseColor("#2C2C2C"));
         headerRow.setPadding(0, 16, 0, 16);
@@ -155,7 +153,6 @@ public class NewGameActivity extends AppCompatActivity {
             headerRow.addView(etName);
         }
 
-        // Aggiungi colonna Category a destra per 7 Wonders (NON per Duel)
         if(!isDuel){
             TextView tvHeaderSymbolEnd = new TextView(this);
             tvHeaderSymbolEnd.setText("Category");
@@ -169,7 +166,7 @@ public class NewGameActivity extends AppCompatActivity {
 
         tableMain.addView(headerRow);
 
-        // Righe simboli + celle punteggio con separatori
+        // Righe punteggi
         for(int i=0;i<rows;i++){
             TableRow row = new TableRow(this);
             row.setPadding(0, 8, 0, 8);
@@ -186,16 +183,11 @@ public class NewGameActivity extends AppCompatActivity {
                 EditText etScore = new EditText(this);
                 etScore.setHint("0");
 
-                // Permetti numeri negativi SOLO per la riga delle battaglie (⚔️) in 7 WONDERS
-                // 7 Wonders: simbolo ⚔️ è in posizione 2 → numeri negativi OK
-                // Duel: TUTTI i campi sono solo positivi
                 boolean isBattleRowIn7Wonders = (!isDuel && i == 2);
                 if(isBattleRowIn7Wonders) {
-                    // Permetti numeri negativi (con segno) - SOLO 7 WONDERS
                     etScore.setInputType(android.text.InputType.TYPE_CLASS_NUMBER |
                             android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
                 } else {
-                    // Solo numeri positivi (per Duel e per tutte le altre righe di 7 Wonders)
                     etScore.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
                 }
 
@@ -234,7 +226,7 @@ public class NewGameActivity extends AppCompatActivity {
             tableMain.addView(row);
         }
 
-        // Totale con sfondo grigio scuro
+        // Riga totale
         TableRow totalRow = new TableRow(this);
         totalRow.setBackgroundColor(Color.parseColor("#1E1E1E"));
         totalRow.setPadding(0, 16, 0, 16);
@@ -261,7 +253,6 @@ public class NewGameActivity extends AppCompatActivity {
             totalRow.addView(tvTotal);
         }
 
-        // Aggiungi simbolo sommatoria a destra per 7 Wonders (NON per Duel)
         if(!isDuel){
             TextView tvSumEnd = new TextView(this);
             tvSumEnd.setText("∑");
@@ -275,7 +266,7 @@ public class NewGameActivity extends AppCompatActivity {
 
         tableMain.addView(totalRow);
 
-        // Checkbox per Duel
+        // Checkbox Duel
         if(isDuel){
             TableRow cbRow = new TableRow(this);
             cbRow.setPadding(0, 16, 0, 0);
@@ -322,11 +313,11 @@ public class NewGameActivity extends AppCompatActivity {
             int sum=0;
             for(int i=0;i<scoreCells.length;i++){
                 String s = scoreCells[i][j].getText().toString().trim();
-                if(!s.isEmpty() && !s.equals("-")) { // Ignora "-" da solo (mentre si digita)
+                if(!s.isEmpty() && !s.equals("-")) {
                     try {
                         sum += Integer.parseInt(s);
                     } catch (NumberFormatException e) {
-                        // Ignora errori di parsing (es. input incompleto)
+                        // ignora input incompleto
                     }
                 }
             }
@@ -352,9 +343,9 @@ public class NewGameActivity extends AppCompatActivity {
     private void finishGame() {
         TableRow headerRow = (TableRow) tableMain.getChildAt(0);
 
-        // ===== VALIDAZIONE DATI =====
+        // ===== VALIDAZIONE =====
 
-        // 1. Controlla che tutti i nomi siano compilati
+        // 1. Tutti i nomi compilati
         for (int j = 0; j < numPlayers; j++) {
             EditText etName = (EditText) headerRow.getChildAt(j + 1);
             if (etName.getText().toString().trim().isEmpty()) {
@@ -363,7 +354,7 @@ public class NewGameActivity extends AppCompatActivity {
             }
         }
 
-        // 2. Per 7 Wonders: controlla che TUTTI i campi punteggio siano compilati
+        // 2. Per 7 Wonders: tutti i campi compilati
         if (!isDuel) {
             for (int i = 0; i < scoreCells.length; i++) {
                 for (int j = 0; j < numPlayers; j++) {
@@ -375,17 +366,12 @@ public class NewGameActivity extends AppCompatActivity {
             }
         }
 
-        // 3. Per Duel: controlla vittoria per supremazia
+        // 3. Per Duel: controlla supremazia
         boolean hasSupremacy = false;
         if (isDuel) {
             for (CheckBox cb : duelCheckboxes) {
-                if (cb.isChecked()) {
-                    hasSupremacy = true;
-                    break;
-                }
+                if (cb.isChecked()) { hasSupremacy = true; break; }
             }
-
-            // Se NON c'è supremazia, TUTTI i campi devono essere compilati
             if (!hasSupremacy) {
                 for (int i = 0; i < scoreCells.length; i++) {
                     for (int j = 0; j < numPlayers; j++) {
@@ -400,12 +386,13 @@ public class NewGameActivity extends AppCompatActivity {
 
         // ===== CALCOLO VINCITORE =====
 
-        int maxScore = -1;
         String winner = "";
         int winnerColumn = -1;
         int winnerCheckIndex = -1;
+        String victoryType = "points";
+        List<String> winners = new ArrayList<>();
 
-        // Check supremacy for Duel
+        // Supremazia Duel
         if (isDuel) {
             for (int i = 0; i < duelCheckboxes.size(); i++) {
                 if (duelCheckboxes.get(i).isChecked()) {
@@ -414,138 +401,138 @@ public class NewGameActivity extends AppCompatActivity {
                     winnerCheckIndex = i % 2;
                     EditText etName = (EditText) headerRow.getChildAt(playerIndex + 1);
                     winner = etName.getText().toString().trim();
-                    Log.d("FirebaseResults", "Supremacy victory detected for column " + winnerColumn);
+                    victoryType = (winnerCheckIndex == 0) ? "military" : "scientific";
+                    winners.add(winner);
+                    Log.d("FirebaseResults", "Supremacy victory for: " + winner + " (" + victoryType + ")");
                     break;
                 }
             }
         }
 
-        // Determina vincitore per punteggio se non c'è supremazia
-        List<String> winners = new ArrayList<>();
+        // Nessuna supremazia: calcola per punteggio con spareggio
         if (winnerColumn == -1) {
-            // Prima trova il punteggio massimo
+            // Raccogli totali
+            int[] totals = new int[numPlayers];
+            String[] names = new String[numPlayers];
+            int maxScore = Integer.MIN_VALUE;
+
             for (int j = 0; j < numPlayers; j++) {
-                TextView tvTotal = findViewById(1000 + j);
-                int total = Integer.parseInt(tvTotal.getText().toString());
-                if (total > maxScore) {
-                    maxScore = total;
-                }
-            }
-            
-            // Poi trova tutti i giocatori con punteggio massimo
-            for (int j = 0; j < numPlayers; j++) {
-                TextView tvTotal = findViewById(1000 + j);
-                int total = Integer.parseInt(tvTotal.getText().toString());
                 EditText etName = (EditText) headerRow.getChildAt(j + 1);
-                String name = etName.getText().toString().trim();
-                
-                if (total == maxScore) {
-                    winners.add(name);
-                    Log.d("FirebaseResults", "Winner: " + name + " with " + maxScore);
+                names[j] = etName.getText().toString().trim();
+                TextView tvTotal = findViewById(1000 + j);
+                totals[j] = Integer.parseInt(tvTotal.getText().toString());
+                if (totals[j] > maxScore) maxScore = totals[j];
+            }
+
+            // Trova i giocatori con punteggio massimo
+            List<Integer> tiedColumns = new ArrayList<>();
+            for (int j = 0; j < numPlayers; j++) {
+                if (totals[j] == maxScore) tiedColumns.add(j);
+            }
+
+            if (tiedColumns.size() == 1) {
+                // Nessun pareggio
+                int col = tiedColumns.get(0);
+                winners.add(names[col]);
+                Log.d("FirebaseResults", "Winner: " + names[col] + " with " + maxScore);
+            } else {
+                // PAREGGIO: applica spareggio
+                Log.d("FirebaseResults", "Tie detected among " + tiedColumns.size() + " players");
+
+                // Duel → spareggio con carte blu (simbolsDuel[0] = "🟦", indice 0)
+                // 7 Wonders → spareggio con monete (symbols7Wonders[1] = "🪙", indice 1)
+                int tieBreakRow = isDuel ? 0 : 1;
+
+                int maxTieBreak = Integer.MIN_VALUE;
+                for (int col : tiedColumns) {
+                    String raw = scoreCells[tieBreakRow][col].getText().toString().trim();
+                    int val = raw.isEmpty() ? 0 : Integer.parseInt(raw);
+                    if (val > maxTieBreak) maxTieBreak = val;
+                }
+
+                List<Integer> stillTied = new ArrayList<>();
+                for (int col : tiedColumns) {
+                    String raw = scoreCells[tieBreakRow][col].getText().toString().trim();
+                    int val = raw.isEmpty() ? 0 : Integer.parseInt(raw);
+                    if (val == maxTieBreak) stillTied.add(col);
+                }
+
+                if (stillTied.size() == 1) {
+                    // Lo spareggio ha risolto il pareggio
+                    int col = stillTied.get(0);
+                    winners.add(names[col]);
+                    String tieBreakSymbol = isDuel ? "🟦 blue cards" : "🪙 coins";
+                    Log.d("FirebaseResults", "Tie-break resolved by " + tieBreakSymbol + ": " + names[col]);
+                } else {
+                    // Ancora pari → vittoria condivisa
+                    for (int col : stillTied) {
+                        winners.add(names[col]);
+                    }
+                    Log.d("FirebaseResults", "Shared victory among " + stillTied.size() + " players");
                 }
             }
-            winner = winners.get(0); // Per compatibilità
-        } else {
-            // Supremazia: un solo vincitore
-            winners.add(winner);
         }
 
-        Log.d("FirebaseResults", "Total winners: " + winners.size());
-
+        // ===== MESSAGGIO RISULTATO =====
 
         String message;
-        String victoryType = "points";
         if (isDuel && winnerColumn != -1) {
             String type = (winnerCheckIndex == 0) ? "military supremacy" : "scientific supremacy";
-            victoryType = (winnerCheckIndex == 0) ? "military" : "scientific";
-            message = "The winner is: " + winner + " (" + type + ")";
+            message = "The winner is: " + winners.get(0) + " (" + type + ")";
+        } else if (winners.size() == 1) {
+            message = "The winner is: " + winners.get(0);
         } else {
-            if (winners.size() == 1) {
-                message = "The winner is: " + winners.get(0);
-            } else {
-                // Più vincitori
-                StringBuilder sb = new StringBuilder("The winners are: ");
-                for (int i = 0; i < winners.size(); i++) {
-                    if (i > 0) {
-                        if (i == winners.size() - 1) {
-                            sb.append(" & ");
-                        } else {
-                            sb.append(", ");
-                        }
-                    }
-                    sb.append(winners.get(i));
-                }
-                message = sb.toString();
+            StringBuilder sb = new StringBuilder("The winners are: ");
+            for (int i = 0; i < winners.size(); i++) {
+                if (i > 0) sb.append(i == winners.size() - 1 ? " & " : ", ");
+                sb.append(winners.get(i));
             }
+            message = sb.toString();
         }
 
-        String finalWinner = winner;
         List<String> finalWinners = new ArrayList<>(winners);
         String finalVictoryType = victoryType;
 
-        // Checkbox "Save results" (checked di default)
+        // Checkbox "Save results"
         CheckBox cbSaveResults = new CheckBox(this);
         cbSaveResults.setText("Save results");
         cbSaveResults.setTextColor(Color.parseColor("#FFFFFF"));
         cbSaveResults.setChecked(true);
-        Log.d("FirebaseResults", "Save results checkbox created and checked");
 
         LinearLayout dialogLayout = new LinearLayout(this);
         dialogLayout.setOrientation(LinearLayout.VERTICAL);
         dialogLayout.setPadding(50, 20, 50, 10);
         dialogLayout.addView(cbSaveResults);
 
-        AlertDialog dialog =new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Game finished")
                 .setMessage(message)
                 .setView(dialogLayout)
                 .setPositiveButton("OK", (d, w) -> {
-                    Log.d("FirebaseResults", "OK button clicked");
-                    Log.d("FirebaseResults", "Save results checkbox is checked: " + cbSaveResults.isChecked());
                     if (cbSaveResults.isChecked()) {
-                        Log.d("FirebaseResults", "Saving game result...");
                         saveGameResultToFirebase(headerRow, finalWinners, finalVictoryType);
-                    } else {
-                        Log.d("FirebaseResults", "Results NOT saved (checkbox unchecked)");
                     }
                     finish();
                 })
-                .setNegativeButton("Cancel", (d, w) -> {
-                    Log.d("FirebaseResults", "Cancel button clicked - staying on page");
-                    d.dismiss(); // Chiude solo il dialog, NON chiama finish()
-                })
+                .setNegativeButton("Cancel", (d, w) -> d.dismiss())
                 .setCancelable(false)
                 .create();
 
-        // Personalizza i colori del dialog
         dialog.setOnShowListener(dialogInterface -> {
-            // Colora il titolo
             TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
-            if (titleView != null) {
-                titleView.setTextColor(Color.parseColor("#FFD700"));
-            }
+            if (titleView != null) titleView.setTextColor(Color.parseColor("#FFD700"));
 
-            // Colora il messaggio
             TextView messageView = dialog.findViewById(android.R.id.message);
-            if (messageView != null) {
-                messageView.setTextColor(Color.parseColor("#FFFFFF"));
-            }
+            if (messageView != null) messageView.setTextColor(Color.parseColor("#FFFFFF"));
 
-            // Colora i pulsanti
             android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             android.widget.Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
 
-            if (positiveButton != null) {
-                positiveButton.setTextColor(Color.parseColor("#FFD700"));
-            }
-            if (negativeButton != null) {
-                negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
-            }
+            if (positiveButton != null) positiveButton.setTextColor(Color.parseColor("#FFD700"));
+            if (negativeButton != null) negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
         });
 
         dialog.show();
-
-        Log.d("FirebaseResults", "Dialog shown to user");
     }
 
     private void showErrorDialog(String message) {
@@ -557,24 +544,14 @@ public class NewGameActivity extends AppCompatActivity {
                 .create();
 
         dialog.setOnShowListener(dialogInterface -> {
-            // Colora il titolo
             TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
-            if (titleView != null) {
-                titleView.setTextColor(Color.parseColor("#FFD700"));
-            }
+            if (titleView != null) titleView.setTextColor(Color.parseColor("#FFD700"));
 
-            // Colora il messaggio
             TextView messageView = dialog.findViewById(android.R.id.message);
-            if (messageView != null) {
-                messageView.setTextColor(Color.parseColor("#FFFFFF"));
-            }
+            if (messageView != null) messageView.setTextColor(Color.parseColor("#FFFFFF"));
 
-            // Colora i pulsanti
             android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-
-            if (positiveButton != null) {
-                positiveButton.setTextColor(Color.parseColor("#FFD700"));
-            }
+            if (positiveButton != null) positiveButton.setTextColor(Color.parseColor("#FFD700"));
         });
 
         dialog.show();
@@ -583,34 +560,23 @@ public class NewGameActivity extends AppCompatActivity {
     private void saveGameResultToFirebase(TableRow headerRow, List<String> winners, String victoryType) {
         Log.d("FirebaseResults", "=== START SAVING GAME RESULT ===");
 
-        // Crea l'oggetto GameResult
         String gameId = resultsRef.push().getKey();
         long timestamp = System.currentTimeMillis();
 
-
-
-        // Crea il winnerName: singolo nome o "Name1 & Name2" in caso di parità
         String winnerName;
         if (winners.size() == 1) {
             winnerName = winners.get(0);
         } else {
-            // Più vincitori: formatta come "Name1 & Name2" o "Name1, Name2 & Name3"
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < winners.size(); i++) {
-                if (i > 0) {
-                    if (i == winners.size() - 1) {
-                        sb.append(" & ");
-                    } else {
-                        sb.append(", ");
-                    }
-                }
+                if (i > 0) sb.append(i == winners.size() - 1 ? " & " : ", ");
                 sb.append(winners.get(i));
             }
             winnerName = sb.toString();
         }
+
         GameResult gameResult = new GameResult(gameId, timestamp, gameType, winnerName, victoryType, numPlayers);
 
-        // Aggiungi i dati di ogni giocatore
         for (int j = 0; j < numPlayers; j++) {
             EditText etName = (EditText) headerRow.getChildAt(j + 1);
             String name = etName.getText().toString().isEmpty()
@@ -620,7 +586,6 @@ public class NewGameActivity extends AppCompatActivity {
             TextView tvTotal = findViewById(1000 + j);
             int totalScore = Integer.parseInt(tvTotal.getText().toString());
 
-            // Raccogli i punteggi per categoria
             List<Integer> categoryScores = new ArrayList<>();
             for (int i = 0; i < scoreCells.length; i++) {
                 String scoreText = scoreCells[i][j].getText().toString();
@@ -634,21 +599,15 @@ public class NewGameActivity extends AppCompatActivity {
             Log.d("FirebaseResults", "Added player: " + name + " with total: " + totalScore);
         }
 
-        // Salva su Firebase
         if (gameId != null) {
             resultsRef.child(gameId).setValue(gameResult).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Log.d("FirebaseResults", "✅ Game result SAVED successfully!");
                     runOnUiThread(() ->
-                            Toast.makeText(NewGameActivity.this,
-                                    "Game result saved!",
-                                    Toast.LENGTH_SHORT).show()
+                            Toast.makeText(NewGameActivity.this, "Game result saved!", Toast.LENGTH_SHORT).show()
                     );
                 } else {
                     Log.e("FirebaseResults", "❌ ERROR saving game result", task.getException());
-                    if (task.getException() != null) {
-                        Log.e("FirebaseResults", "Exception: " + task.getException().getMessage());
-                    }
                 }
             });
         }
