@@ -78,14 +78,12 @@ public class GameDetailActivity extends AppCompatActivity {
         // Info partita
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         String infoText = "Date: " + sdf.format(new Date(result.getTimestamp())) + "\n";
-        // Se winnerName contiene "&" o "," significa che ci sono più vincitori
         if(result.getWinnerName() != null && (result.getWinnerName().contains(" & ") || result.getWinnerName().contains(", "))) {
             infoText += "Winners: " + result.getWinnerName() + "\n";
         } else {
             infoText += "Winner: " + result.getWinnerName() + "\n";
         }
 
-        // Victory Type - SOLO per Duel (in 7 Wonders è sempre Points quindi non mostrarlo)
         if(isDuel) {
             if(result.getVictoryType() != null && !result.getVictoryType().equals("points")) {
                 if(result.getVictoryType().equals("military")) {
@@ -98,7 +96,6 @@ public class GameDetailActivity extends AppCompatActivity {
             }
         }
 
-        // Mostra numero giocatori SOLO SE NON È DUEL (2 giocatori)
         if(result.getNumPlayers() != 2) {
             infoText += "Players: " + result.getNumPlayers();
         }
@@ -108,7 +105,7 @@ public class GameDetailActivity extends AppCompatActivity {
         // Crea tabella
         tableDetail.removeAllViews();
 
-        // Header con nomi giocatori - DARK THEME
+        // Header con nomi giocatori
         TableRow headerRow = new TableRow(this);
         headerRow.setBackgroundColor(Color.parseColor("#2C2C2C"));
         headerRow.setPadding(0, 16, 0, 16);
@@ -130,7 +127,6 @@ public class GameDetailActivity extends AppCompatActivity {
             tvName.setTypeface(null, android.graphics.Typeface.BOLD);
             tvName.setTextSize(14);
 
-            // Evidenzia i vincitori in oro
             if(result.isWinner(player.getName())) {
                 tvName.setTextColor(Color.parseColor("#FFD700"));
             } else {
@@ -148,7 +144,6 @@ public class GameDetailActivity extends AppCompatActivity {
             row.setPadding(0, 8, 0, 8);
             row.setGravity(Gravity.CENTER);
 
-            // Simbolo categoria
             TextView tvSymbol = new TextView(this);
             tvSymbol.setText(symbols[i]);
             tvSymbol.setTextSize(24);
@@ -156,7 +151,6 @@ public class GameDetailActivity extends AppCompatActivity {
             tvSymbol.setPadding(16, 8, 16, 8);
             row.addView(tvSymbol);
 
-            // Punteggi per ogni giocatore
             for(GameResult.PlayerResult player : result.getPlayers()) {
                 TextView tvScore = new TextView(this);
                 List<Integer> scores = player.getCategoryScores();
@@ -171,7 +165,6 @@ public class GameDetailActivity extends AppCompatActivity {
 
             tableDetail.addView(row);
 
-            // Separatore
             View divider = new View(this);
             divider.setLayoutParams(new TableLayout.LayoutParams(
                     TableLayout.LayoutParams.MATCH_PARENT, 1));
@@ -179,7 +172,7 @@ public class GameDetailActivity extends AppCompatActivity {
             tableDetail.addView(divider);
         }
 
-        // Riga totale - DARK THEME
+        // Riga totale
         TableRow totalRow = new TableRow(this);
         totalRow.setBackgroundColor(Color.parseColor("#1E1E1E"));
         totalRow.setPadding(0, 16, 0, 16);
@@ -202,7 +195,6 @@ public class GameDetailActivity extends AppCompatActivity {
             tvTotal.setTypeface(null, android.graphics.Typeface.BOLD);
             tvTotal.setTextSize(18);
 
-            // Evidenzia i vincitori in oro
             if(result.isWinner(player.getName())) {
                 tvTotal.setTextColor(Color.parseColor("#FFD700"));
             } else {
@@ -220,19 +212,16 @@ public class GameDetailActivity extends AppCompatActivity {
             cbRow.setPadding(0, 16, 0, 0);
             cbRow.setGravity(Gravity.CENTER);
 
-            // Colonna vuota per allineare con la prima colonna
             TextView tvEmpty = new TextView(this);
             tvEmpty.setText(" ");
             tvEmpty.setPadding(16, 8, 16, 8);
             cbRow.addView(tvEmpty);
 
-            // Determina quale giocatore ha vinto per supremazia (se c'è una vittoria per supremazia)
             String winnerName = result.getWinnerName();
             String victoryType = result.getVictoryType();
             boolean hasMilitaryVictory = "military".equals(victoryType);
             boolean hasScientificVictory = "scientific".equals(victoryType);
 
-            // Crea le checkbox per ogni giocatore
             for(GameResult.PlayerResult player : result.getPlayers()) {
                 LinearLayout ll = new LinearLayout(this);
                 ll.setOrientation(LinearLayout.VERTICAL);
@@ -245,26 +234,20 @@ public class GameDetailActivity extends AppCompatActivity {
                 llParams.gravity = Gravity.CENTER;
                 ll.setLayoutParams(llParams);
 
-                // Checkbox rossa (Military Supremacy)
                 CheckBox cbRed = new CheckBox(this);
                 cbRed.setButtonTintList(android.content.res.ColorStateList.valueOf(
                         Color.parseColor("#B90E0A")
                 ));
-                cbRed.setEnabled(false); // Disabilita l'interazione (solo visualizzazione)
-
-                // Seleziona se questo giocatore ha vinto per supremazia militare
+                cbRed.setEnabled(false);
                 if(hasMilitaryVictory && player.getName().equals(winnerName)) {
                     cbRed.setChecked(true);
                 }
 
-                // Checkbox verde (Scientific Supremacy)
                 CheckBox cbGreen = new CheckBox(this);
                 cbGreen.setButtonTintList(android.content.res.ColorStateList.valueOf(
                         Color.parseColor("#02971F")
                 ));
-                cbGreen.setEnabled(false); // Disabilita l'interazione (solo visualizzazione)
-
-                // Seleziona se questo giocatore ha vinto per supremazia scientifica
+                cbGreen.setEnabled(false);
                 if(hasScientificVictory && player.getName().equals(winnerName)) {
                     cbGreen.setChecked(true);
                 }
@@ -281,40 +264,141 @@ public class GameDetailActivity extends AppCompatActivity {
     private void showDeleteConfirmation() {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Delete Game")
-                .setMessage("Are you sure you want to delete this game? This action cannot be undone.")
-                .setPositiveButton("Yes", (dialogInterface, which) -> {
-                    deleteGame();
-                })
-                .setNegativeButton("No", (dialogInterface, which) -> {
-                    dialogInterface.dismiss();
-                })
+                .setMessage("Do you want to delete this game?")
+                .setPositiveButton("Yes", null) // gestito manualmente
+                .setNegativeButton("No", (d, w) -> d.dismiss())
                 .setCancelable(true)
                 .create();
 
-        // Personalizza i colori del dialog
         dialog.setOnShowListener(dialogInterface -> {
-            // Colora il titolo
             TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
-            if (titleView != null) {
-                titleView.setTextColor(Color.parseColor("#FFD700"));
-            }
+            if (titleView != null) titleView.setTextColor(Color.parseColor("#FFD700"));
 
-            // Colora il messaggio
             TextView messageView = dialog.findViewById(android.R.id.message);
-            if (messageView != null) {
-                messageView.setTextColor(Color.parseColor("#FFFFFF"));
-            }
+            if (messageView != null) messageView.setTextColor(Color.parseColor("#FFFFFF"));
 
-            // Colora i pulsanti
             android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             android.widget.Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
 
             if (positiveButton != null) {
                 positiveButton.setTextColor(Color.parseColor("#FFD700"));
+                positiveButton.setOnClickListener(v -> {
+                    dialog.dismiss();
+                    showPasswordDialog();
+                });
             }
             if (negativeButton != null) {
                 negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
             }
+        });
+
+        dialog.show();
+    }
+
+
+    private void showPasswordDialog() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 20, 50, 20);
+
+        final EditText input = new EditText(this);
+        input.setHint("Enter password");
+        input.setHintTextColor(Color.parseColor("#888888"));
+        input.setTextColor(Color.parseColor("#FFFFFF"));
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        inputParams.setMargins(20, 10, 20, 10);
+        input.setLayoutParams(inputParams);
+
+        CheckBox checkBox = new CheckBox(this);
+        checkBox.setText("Show password");
+        checkBox.setTextColor(Color.parseColor("#B0B0B0"));
+        checkBox.setButtonTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#FFD700")));
+
+        LinearLayout.LayoutParams checkBoxParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        checkBoxParams.setMargins(20, 5, 20, 10);
+        checkBoxParams.gravity = Gravity.CENTER;
+        checkBox.setLayoutParams(checkBoxParams);
+
+        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+            } else {
+                input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            }
+            input.setSelection(input.getText().length());
+        });
+
+        layout.addView(input);
+        layout.addView(checkBox);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Enter Password")
+                .setMessage("Enter the password to confirm deletion:")
+                .setView(layout)
+                .setPositiveButton("Confirm", null) // gestito manualmente
+                .setNegativeButton("Cancel", (d, w) -> d.dismiss())
+                .setCancelable(true)
+                .create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) titleView.setTextColor(Color.parseColor("#FFD700"));
+
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) messageView.setTextColor(Color.parseColor("#FFFFFF"));
+
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            android.widget.Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+
+            if (positiveButton != null) {
+                positiveButton.setTextColor(Color.parseColor("#FFD700"));
+                positiveButton.setOnClickListener(v -> {
+                    String enteredPassword = input.getText().toString();
+                    if (enteredPassword.equals("Zoro5212!")) {
+                        dialog.dismiss();
+                        deleteGame();
+                    } else {
+                        dialog.dismiss();
+                        showWrongPasswordDialog();
+                    }
+                });
+            }
+            if (negativeButton != null) {
+                negativeButton.setTextColor(Color.parseColor("#B0B0B0"));
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void showWrongPasswordDialog() {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Wrong Password")
+                .setMessage("The password you entered is incorrect.")
+                .setPositiveButton("OK", (d, w) -> {
+                    d.dismiss();
+                    showPasswordDialog(); // Riprova
+                })
+                .setCancelable(false)
+                .create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            TextView titleView = dialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null) titleView.setTextColor(Color.parseColor("#FFD700"));
+
+            TextView messageView = dialog.findViewById(android.R.id.message);
+            if (messageView != null) messageView.setTextColor(Color.parseColor("#FFFFFF"));
+
+            android.widget.Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (positiveButton != null) positiveButton.setTextColor(Color.parseColor("#FFD700"));
         });
 
         dialog.show();
@@ -333,7 +417,7 @@ public class GameDetailActivity extends AppCompatActivity {
             if(task.isSuccessful()) {
                 Log.d("GameDetailActivity", "Game deleted successfully");
                 Toast.makeText(this, "Game deleted successfully", Toast.LENGTH_SHORT).show();
-                finish(); // Torna alla schermata precedente
+                finish();
             } else {
                 Log.e("GameDetailActivity", "Error deleting game", task.getException());
                 Toast.makeText(this, "Error deleting game: " +
