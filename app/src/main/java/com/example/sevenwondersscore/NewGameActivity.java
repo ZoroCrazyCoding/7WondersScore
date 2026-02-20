@@ -144,6 +144,11 @@ public class NewGameActivity extends AppCompatActivity {
             etName.setTextSize(14);
             etName.setTextColor(Color.parseColor("#FFFFFF"));
             etName.setHintTextColor(Color.parseColor("#808080"));
+            etName.setOnFocusChangeListener((v, hasFocus) -> {
+                if (!hasFocus) {
+                    etName.setText(etName.getText().toString().trim());
+                }
+            });
             TableRow.LayoutParams params = new TableRow.LayoutParams(
                     TableRow.LayoutParams.WRAP_CONTENT,
                     TableRow.LayoutParams.WRAP_CONTENT
